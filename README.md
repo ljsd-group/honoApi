@@ -1,25 +1,26 @@
-# Cloudflare Workers OpenAPI 3.1
+# honoStudy - Hono学习项目
 
-This is a Cloudflare Worker with OpenAPI 3.1 using [chanfana](https://github.com/cloudflare/chanfana) and [Hono](https://github.com/honojs/hono).
+## Cloudflare Workers OpenAPI 3.1
 
-This is an example project made to be used as a quick start into building OpenAPI compliant Workers that generates the
-`openapi.json` schema automatically from code and validates the incoming request to the defined parameters or request body.
+这是一个使用 [chanfana](https://github.com/cloudflare/chanfana) 和 [Hono](https://github.com/honojs/hono) 框架的 Cloudflare Worker，支持 OpenAPI 3.1。
 
-## Get started
+这是一个示例项目，旨在作为快速开始构建符合 OpenAPI 的 Workers 的起点，它可以自动从代码生成 `openapi.json` 模式，并根据定义的参数或请求正文验证传入的请求。
 
-1. Sign up for [Cloudflare Workers](https://workers.dev). The free tier is more than enough for most use cases.
-2. Clone this project and install dependencies with `npm install`
-3. Run `wrangler login` to login to your Cloudflare account in wrangler
-4. Run `wrangler deploy` to publish the API to Cloudflare Workers
+## 开始使用
 
-## Project structure
+1. 注册 [Cloudflare Workers](https://workers.dev)。免费层级对大多数用例来说足够了。
+2. 克隆此项目并使用 `npm install` 安装依赖项
+3. 运行 `wrangler login` 在 wrangler 中登录到您的 Cloudflare 帐户
+4. 运行 `wrangler deploy` 将 API 发布到 Cloudflare Workers
 
-1. Your main router is defined in `src/index.ts`.
-2. Each endpoint has its own file in `src/endpoints/`.
-3. For more information read the [chanfana documentation](https://chanfana.pages.dev/) and [Hono documentation](https://hono.dev/docs).
+## 项目结构
 
-## Development
+1. 您的主路由器在 `src/index.ts` 中定义。
+2. 每个端点在 `src/endpoints/` 中都有自己的文件。
+3. 有关更多信息，请阅读 [chanfana 文档](https://chanfana.pages.dev/) 和 [Hono 文档](https://hono.dev/docs)。
 
-1. Run `wrangler dev` to start a local instance of the API.
-2. Open `http://localhost:8787/` in your browser to see the Swagger interface where you can try the endpoints.
-3. Changes made in the `src/` folder will automatically trigger the server to reload, you only need to refresh the Swagger interface.
+## 开发
+
+1. 运行 `wrangler dev` 启动 API 的本地实例。
+2. 在浏览器中打开 `http://localhost:8787/` 查看 Swagger 界面，您可以在其中尝试端点。
+3. 对 `src/` 文件夹所做的更改将自动触发服务器重新加载，您只需刷新 Swagger 界面即可。
