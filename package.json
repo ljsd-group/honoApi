@@ -1,0 +1,29 @@
+{
+	"name": "cloudflare-workers-openapi",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"deploy": "vite build && wrangler deploy",
+		"start": "vite dev",
+		"cf-typegen": "wrangler types"
+	},
+	"dependencies": {
+		"bcryptjs": "^3.0.2",
+		"chanfana": "^2.6.3",
+		"hono": "^4.7.8",
+		"zod": "^3.24.1"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20250507.0",
+		"@hono/vite-dev-server": "^0.19.0",
+		"@types/bcryptjs": "^3.0.0",
+		"@types/node": "22.13.0",
+		"@types/service-worker-mock": "^2.0.4",
+		"vite": "^6.3.5",
+		"vite-plugin-node-polyfills": "^0.23.0",
+		"wrangler": "^4.14.3"
+	}
+}
