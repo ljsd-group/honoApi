@@ -1,6 +1,7 @@
 import { db } from '../config/database';
 import { tasks } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
+import { PaginationParams, paginate, PaginatedResult } from '../utils/pagination';
 
 export interface Task {
   id?: number;
@@ -10,12 +11,36 @@ export interface Task {
 }
 
 export class TaskService {
-  // 获取所有任务
+  // 获取所有任务（无分页）
   async getAllTasks() {
     try {
       return await db.select().from(tasks);
     } catch (error) {
       console.error('获取任务列表失败:', error);
+      throw error;
+    }
+  }
+  
+  // 获取任务列表（带分页）
+  async getTasksWithPagination(params: PaginationParams): Promise<PaginatedResult<Task>> {
+    try {
+      // 默认按创建时间倒序排列
+      const orderByClause = desc(tasks.created_at);
+      return await paginate<Task>(tasks, params, undefined, orderByClause);
+    } catch (error) {
+      console.error('获取分页任务列表失败:', error);
+      throw error;
+    }
+  }
+  
+  // 按状态获取任务列表（带分页）
+  async getTasksByStatus(status: string, params: PaginationParams): Promise<PaginatedResult<Task>> {
+    try {
+      const whereClause = eq(tasks.status, status);
+      const orderByClause = desc(tasks.created_at);
+      return await paginate<Task>(tasks, params, whereClause, orderByClause);
+    } catch (error) {
+      console.error(`获取状态为${status}的任务列表失败:`, error);
       throw error;
     }
   }
