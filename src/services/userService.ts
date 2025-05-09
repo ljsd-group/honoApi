@@ -1,105 +1,142 @@
+import { mysqlPool } from "../config/database";
+import { RowDataPacket } from "mysql2";
 import bcrypt from 'bcryptjs';
-import { SafeUser, UserWithPassword } from '../types/auth';
 
-/**
- * 模拟数据库中的用户
- * 实际应用中应该连接到数据库
- */
-const MOCK_USERS: UserWithPassword[] = [
-  {
-    id: '1',
-    username: 'admin',
-    // 密码: admin123
-    password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-    name: '管理员',
-    role: 'admin',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    username: 'user',
-    // 密码: user123
-    password: '$2a$10$CwTycUXWue0Thq9StjUM0uQxTmxRuOXA/R3allOM78a0iPnndaiyi',
-    name: '普通用户',
-    role: 'user',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-];
+// 定义用户记录类型
+export interface UserRecord extends RowDataPacket {
+  id: number;
+  username: string;
+  password: string;
+  email: string;
+  created_at: Date;
+  updated_at: Date;
+}
 
-// 定义开发环境账号密码映射
-const DEV_ACCOUNTS = {
-  'admin': 'admin123',
-  'user': 'user123'
-};
+export interface User {
+  id?: number;
+  username: string;
+  password?: string;
+  email: string;
+}
 
-/**
- * 验证用户凭证
- * @param username 用户名
- * @param password 密码
- * @returns 验证通过返回用户信息（不含密码），否则返回null
- */
-export async function validateUser(username: string, password: string): Promise<SafeUser | null> {
-  console.log(`尝试验证用户: ${username}`);
-  
-  // 查找用户
-  const user = MOCK_USERS.find(u => u.username === username);
-  
-  if (!user) {
-    console.log(`用户不存在: ${username}`);
-    return null;
-  }
-  
-  console.log(`找到用户: ${username}, 现在比较密码`);
-  
-  // 开发环境直接验证
-  if (DEV_ACCOUNTS[username] === password) {
-    console.log('开发环境账号密码验证成功');
-    const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
-  }
-  
-  try {
-    // 生产环境使用bcrypt验证
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    console.log(`密码验证结果: ${isPasswordValid ? '成功' : '失败'}`);
-    
-    if (!isPasswordValid) {
-      return null;
+export class UserService {
+  // 通过用户名查找用户
+  async findByUsername(username: string): Promise<UserRecord | null> {
+    try {
+      const connection = await mysqlPool.getConnection();
+      try {
+        // 查询用户
+        const [rows] = await connection.execute<UserRecord[]>(
+          'SELECT * FROM users WHERE username = ?',
+          [username]
+        );
+        
+        return rows.length > 0 ? rows[0] : null;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error(`查找用户${username}失败:`, error);
+      throw error;
     }
-    
-    // 返回用户信息，排除密码
-    const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
-  } catch (err) {
-    console.error('密码验证出错:', err);
-    return null;
-  }
-}
-
-/**
- * 根据ID查找用户
- * @param id 用户ID
- * @returns 用户信息（不含密码）或null
- */
-export function findUserById(id: string): SafeUser | null {
-  const user = MOCK_USERS.find(u => u.id === id);
-  
-  if (!user) {
-    return null;
   }
   
-  // 返回用户信息，排除密码
-  const { password: _, ...userWithoutPassword } = user;
-  return userWithoutPassword;
-}
-
-/**
- * 哈希密码
- * @param password 明文密码
- * @returns 哈希后的密码
- */
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
+  // 验证用户凭据
+  async validateUser(username: string, password: string): Promise<{ valid: boolean, user: UserRecord | null }> {
+    try {
+      const user = await this.findByUsername(username);
+      console.log(user)
+      if (!user) {
+        return { valid: false, user: null };
+      }
+      
+      let valid = false;
+      
+      // 首先尝试直接比较（用于测试/开发）
+      if (user.password === password) {
+        valid = true;
+      } 
+      // 如果直接比较失败，并且密码以$2b$或$2a$开头（bcrypt哈希），尝试bcrypt比较
+      else if (user.password.startsWith('$2b$') || user.password.startsWith('$2a$')) {
+        try {
+          // 尝试使用bcrypt比较密码
+          valid = await bcrypt.compare(password, user.password);
+        } catch (error) {
+          console.error('bcrypt比较密码失败:', error);
+        }
+      }
+      
+      return { 
+        valid, 
+        user: valid ? user : null 
+      };
+    } catch (error) {
+      console.error('验证用户失败:', error);
+      throw error;
+    }
+  }
+  
+  // 创建新用户
+  async createUser(userData: User): Promise<number> {
+    try {
+      const connection = await mysqlPool.getConnection();
+      try {
+        // 插入用户
+        const [result] = await connection.execute(
+          'INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
+          [userData.username, userData.password, userData.email]
+        );
+        
+        return (result as any).insertId;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('创建用户失败:', error);
+      throw error;
+    }
+  }
+  
+  // 获取所有用户
+  async getAllUsers(): Promise<UserRecord[]> {
+    try {
+      const connection = await mysqlPool.getConnection();
+      try {
+        // 查询所有用户
+        const [rows] = await connection.execute<UserRecord[]>('SELECT id, username, email, created_at, updated_at FROM users');
+        return rows;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('获取所有用户失败:', error);
+      throw error;
+    }
+  }
+  
+  // 通过ID获取用户
+  async getUserById(id: number): Promise<UserRecord | null> {
+    try {
+      const connection = await mysqlPool.getConnection();
+      try {
+        // 查询用户
+        const [rows] = await connection.execute<UserRecord[]>(
+          'SELECT id, username, email, created_at, updated_at FROM users WHERE id = ?',
+          [id]
+        );
+        
+        return rows.length > 0 ? rows[0] : null;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error(`获取用户ID=${id}失败:`, error);
+      throw error;
+    }
+  }
+  
+  // 哈希密码工具方法
+  async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 10);
+  }
 } 

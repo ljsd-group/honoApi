@@ -1,73 +1,75 @@
-import { Bool, OpenAPIRoute, Str } from "chanfana";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { z } from "zod";
-import { type AppContext, Task } from "../types";
-import { error, success } from "../utils/response";
-import { ResponseCode } from "../utils/response";
+import { TaskService } from "../services/taskService";
 
-export class TaskFetch extends OpenAPIRoute {
-	schema = {
-		tags: ["Tasks"],
-		summary: "根据slug获取单个任务",
+const taskService = new TaskService();
+const app = new OpenAPIHono();
+
+app.openapi(
+	{
+		method: "get",
+		path: "/:id",
 		request: {
 			params: z.object({
-				taskSlug: Str({ description: "任务标识" }),
-			}),
+				id: z.string().transform((val) => parseInt(val, 10))
+			})
 		},
 		responses: {
-			"200": {
-				description: "如果找到，则返回单个任务",
+			200: {
+				description: "Returns a single task",
 				content: {
 					"application/json": {
 						schema: z.object({
-							code: z.number(),
-							data: z.object({
-								task: Task,
-							}),
-							message: z.string(),
-						}),
-					},
-				},
+							id: z.number(),
+							title: z.string(),
+							description: z.string().optional(),
+							status: z.string().optional(),
+							created_at: z.string(),
+							updated_at: z.string()
+						})
+					}
+				}
 			},
-			"404": {
-				description: "任务未找到",
+			404: {
+				description: "Task not found",
 				content: {
 					"application/json": {
 						schema: z.object({
-							code: z.number(),
-							message: z.string(),
-						}),
-					},
-				},
+							success: z.boolean(),
+							error: z.string()
+						})
+					}
+				}
 			},
+			500: {
+				description: "Server error"
+			}
 		},
-	};
-
-	async handle(c: AppContext) {
-		// 获取验证后的数据
-		const data = await this.getValidatedData<typeof this.schema>();
-
-		// 提取验证后的slug
-		const { taskSlug } = data.params;
-
-		// 在此实现自己的对象获取逻辑
-		// 示例：检查任务是否存在（实际项目中通常会查询数据库）
-		const exists = true; // 在实际应用中，这个值可能是false
-
-		// 检查对象是否存在
-		if (!exists) {
-			return error(c, "任务未找到", ResponseCode.NOT_FOUND, 404);
+		tags: ["Tasks"]
+	},
+	async (c) => {
+		try {
+			const { id } = c.req.valid('param');
+			
+			// 获取任务
+			const task = await taskService.getTaskById(id);
+			
+			if (!task) {
+				return c.json({
+					success: false,
+					error: "Task not found"
+				}, 404);
+			}
+			
+			return c.json(task);
+		} catch (error) {
+			console.error(`Error fetching task:`, error);
+			return c.json({
+				success: false,
+				error: "Failed to fetch task"
+			}, 500);
 		}
-
-		// 构建任务对象
-		const task = {
-			name: "我的任务",
-			slug: taskSlug,
-			description: "这需要被完成",
-			completed: false,
-			due_date: new Date().toISOString().slice(0, 10),
-		};
-
-		// 使用自定义响应格式
-		return success(c, { task }, "获取任务成功");
 	}
-}
+);
+
+export default app;

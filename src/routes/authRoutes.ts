@@ -1,15 +1,22 @@
-import { LoginHandler } from "../endpoints/auth/login";
+import { Hono } from "hono";
+import loginApp from "../endpoints/auth/login";
+
+// 定义环境类型
+type Env = {
+  Bindings: any;
+};
+
+// 创建认证路由器
+export const authRouter = new Hono<Env>();
+
+// 挂载登录端点
+authRouter.route('/login', loginApp);
 
 /**
  * 注册认证相关路由
- * @param openapi OpenAPI实例
+ * @param app Hono应用实例
  */
-export function registerAuthRoutes(openapi: any) {
-  // 登录接口
-  openapi.post("/api/auth/login", LoginHandler);
-  
-  // 这里可以添加更多认证相关接口
-  // openapi.post("/api/auth/register", RegisterHandler);
-  // openapi.post("/api/auth/refresh-token", RefreshTokenHandler);
-  // openapi.post("/api/auth/logout", LogoutHandler);
+export function registerAuthRoutes(app: Hono<Env>) {
+  // 挂载认证路由
+  app.route('/api/auth', authRouter);
 } 

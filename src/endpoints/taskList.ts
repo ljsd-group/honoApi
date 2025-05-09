@@ -1,68 +1,51 @@
-import { Bool, Num, OpenAPIRoute } from "chanfana";
-import { z } from "zod";
-import { type AppContext, Task } from "../types";
-import { success } from "../utils/response";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { TaskService } from "../services/taskService";
 
-export class TaskList extends OpenAPIRoute {
-	schema = {
-		tags: ["Tasks"],
-		summary: "获取任务列表",
-		request: {
-			query: z.object({
-				page: Num({
-					description: "页码",
-					default: 0,
-				}),
-				isCompleted: Bool({
-					description: "根据完成状态筛选",
-					required: false,
-				}),
-			}),
-		},
+const taskService = new TaskService();
+
+const app = new OpenAPIHono();
+
+app.openapi(
+	{
+		method: "get",
+		path: "/",
 		responses: {
-			"200": {
-				description: "返回任务列表",
+			200: {
+				description: "Returns a list of tasks",
 				content: {
 					"application/json": {
-						schema: z.object({
-							code: z.number(),
-							data: z.object({
-								tasks: Task.array(),
-							}),
-							message: z.string(),
-						}),
+						schema: {
+							type: "array",
+							items: {
+								type: "object",
+								properties: {
+									id: { type: "number" },
+									title: { type: "string" },
+									description: { type: "string" },
+									status: { type: "string" },
+									created_at: { type: "string", format: "date-time" },
+									updated_at: { type: "string", format: "date-time" },
+								},
+							},
+						},
 					},
 				},
 			},
+			500: {
+				description: "Server error",
+			},
 		},
-	};
-
-	async handle(c: AppContext) {
-		// 获取验证后的数据
-		const data = await this.getValidatedData<typeof this.schema>();
-
-		// 提取验证后的参数
-		const { page, isCompleted } = data.query;
-
-		// 在此实现自己的对象列表逻辑
-		const tasks = [
-			{
-				name: "打扫我的房间",
-				slug: "clean-room",
-				description: null,
-				completed: false,
-				due_date: "2025-01-05",
-			},
-			{
-				name: "使用Cloudflare Workers构建一些很棒的东西",
-				slug: "cloudflare-workers",
-				description: "示例描述",
-				completed: true,
-				due_date: "2022-12-24",
-			},
-		];
-
-		// 使用自定义响应格式
-		return success(c, { tasks }, "获取任务列表成功");
+		tags: ["Tasks"],
+	},
+	async (c) => {
+		try {
+			const tasks = await taskService.getAllTasks();
+			return c.json(tasks);
+		} catch (error) {
+			console.error("Error fetching tasks:", error);
+			return c.json({ error: "Failed to retrieve tasks" }, 500);
+		}
 	}
-}
+);
+
+export default app;

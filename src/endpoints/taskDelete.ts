@@ -1,54 +1,76 @@
-import { Bool, OpenAPIRoute, Str } from "chanfana";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { z } from "zod";
-import { type AppContext, Task } from "../types";
-import { success } from "../utils/response";
+import { TaskService } from "../services/taskService";
 
-export class TaskDelete extends OpenAPIRoute {
-	schema = {
-		tags: ["Tasks"],
-		summary: "删除任务",
+const taskService = new TaskService();
+const app = new OpenAPIHono();
+
+app.openapi(
+	{
+		method: "delete",
+		path: "/:id",
 		request: {
 			params: z.object({
-				taskSlug: Str({ description: "任务标识" }),
-			}),
+				id: z.string().transform((val) => parseInt(val, 10))
+			})
 		},
 		responses: {
-			"200": {
-				description: "返回任务是否成功删除",
+			200: {
+				description: "Task deleted successfully",
 				content: {
 					"application/json": {
 						schema: z.object({
-							code: z.number(),
-							data: z.object({
-								task: Task,
-							}),
-							message: z.string(),
-						}),
-					},
-				},
+							success: z.boolean(),
+							message: z.string()
+						})
+					}
+				}
 			},
+			404: {
+				description: "Task not found",
+				content: {
+					"application/json": {
+						schema: z.object({
+							success: z.boolean(),
+							error: z.string()
+						})
+					}
+				}
+			},
+			500: {
+				description: "Server error"
+			}
 		},
-	};
-
-	async handle(c: AppContext) {
-		// 获取验证后的数据
-		const data = await this.getValidatedData<typeof this.schema>();
-
-		// 提取验证后的slug
-		const { taskSlug } = data.params;
-
-		// 在此实现自己的对象删除逻辑
-
-		// 构建被删除的任务对象（用于确认）
-		const task = {
-			name: "使用Cloudflare Workers构建一些很棒的东西",
-			slug: taskSlug,
-			description: "示例描述",
-			completed: true,
-			due_date: "2022-12-24",
-		};
-
-		// 使用自定义响应格式
-		return success(c, { task }, "删除任务成功");
+		tags: ["Tasks"]
+	},
+	async (c) => {
+		try {
+			const { id } = c.req.valid('param');
+			
+			// 检查任务是否存在
+			const task = await taskService.getTaskById(id);
+			if (!task) {
+				return c.json({
+					success: false,
+					error: "Task not found"
+				}, 404);
+			}
+			
+			// 删除任务
+			await taskService.deleteTask(id);
+			
+			return c.json({
+				success: true,
+				message: "Task deleted successfully"
+			});
+		} catch (error) {
+			console.error(`Error deleting task:`, error);
+			return c.json({
+				success: false,
+				error: "Failed to delete task"
+			}, 500);
+		}
 	}
-}
+);
+
+export default app;

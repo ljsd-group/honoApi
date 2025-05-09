@@ -1,22 +1,38 @@
-import { TaskCreate } from "../endpoints/taskCreate";
-import { TaskDelete } from "../endpoints/taskDelete";
-import { TaskFetch } from "../endpoints/taskFetch";
-import { TaskList } from "../endpoints/taskList";
+import taskListApp from "../endpoints/taskList";
+import taskCreateApp from "../endpoints/taskCreate";
+import taskFetchApp from "../endpoints/taskFetch";
+import taskDeleteApp from "../endpoints/taskDelete";
+import { Hono } from "hono";
 import { registerAuthRoutes } from "./authRoutes";
+
+// 定义环境类型
+type Env = {
+  Bindings: any;
+};
+
+// 创建API路由器
+export const apiRouter = new Hono<Env>();
+
+// 注册任务相关API
+const taskRouter = new Hono<Env>();
+taskRouter.route('/', taskListApp);
+taskRouter.route('/', taskCreateApp);
+taskRouter.route('/:id', taskFetchApp);
+taskRouter.route('/:id', taskDeleteApp);
+
+// 挂载任务路由
+apiRouter.route('/tasks', taskRouter);
 
 /**
  * 注册所有API路由
- * @param openapi OpenAPI实例
+ * @param app Hono应用实例
  */
-export function registerApiRoutes(openapi: any) {
+export function registerApiRoutes(app: Hono<Env>) {
   // 注册认证路由
-  registerAuthRoutes(openapi);
+  registerAuthRoutes(app);
   
-  // 任务相关API
-  openapi.get("/api/tasks", TaskList);
-  openapi.post("/api/tasks", TaskCreate);
-  openapi.get("/api/tasks/:taskSlug", TaskFetch);
-  openapi.delete("/api/tasks/:taskSlug", TaskDelete);
+  // 挂载API路由
+  app.route('/api', apiRouter);
   
   // 可以添加更多API分组
   // registerUserRoutes(openapi);

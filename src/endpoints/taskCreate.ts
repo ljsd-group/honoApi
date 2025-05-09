@@ -1,58 +1,91 @@
-import { Bool, OpenAPIRoute } from "chanfana";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { z } from "zod";
-import { type AppContext, Task } from "../types";
-import { success } from "../utils/response";
+import { TaskService, Task } from "../services/taskService";
 
-export class TaskCreate extends OpenAPIRoute {
-	schema = {
-		tags: ["Tasks"],
-		summary: "创建新任务",
+const taskService = new TaskService();
+const app = new OpenAPIHono();
+
+const taskSchema = z.object({
+	title: z.string().min(1).max(255),
+	description: z.string().max(1000).optional(),
+	status: z.string().max(50).optional(),
+});
+
+app.openapi(
+	{
+		method: "post",
+		path: "/",
 		request: {
 			body: {
 				content: {
 					"application/json": {
-						schema: Task,
+						schema: taskSchema,
 					},
 				},
 			},
 		},
 		responses: {
-			"200": {
-				description: "返回创建的任务",
+			201: {
+				description: "Task created successfully",
 				content: {
 					"application/json": {
 						schema: z.object({
-							code: z.number(),
-							data: z.object({
-								task: Task,
-							}),
-							message: z.string(),
+							success: z.boolean(),
+							task: z.object({
+								id: z.number(),
+								title: z.string(),
+								description: z.string().optional(),
+								status: z.string().optional(),
+							}).optional(),
 						}),
 					},
 				},
 			},
+			400: {
+				description: "Invalid input",
+			},
+			500: {
+				description: "Server error",
+			},
 		},
-	};
-
-	async handle(c: AppContext) {
-		// 获取验证后的数据
-		const data = await this.getValidatedData<typeof this.schema>();
-
-		// 提取验证后的请求体
-		const taskToCreate = data.body;
-
-		// 在此实现自己的对象插入逻辑
-
-		// 创建任务对象
-		const task = {
-			name: taskToCreate.name,
-			slug: taskToCreate.slug,
-			description: taskToCreate.description,
-			completed: taskToCreate.completed,
-			due_date: taskToCreate.due_date,
-		};
-
-		// 使用自定义响应格式
-		return success(c, { task }, "创建任务成功");
+		tags: ["Tasks"],
+	},
+	async (c) => {
+		try {
+			const taskData = await c.req.json();
+			
+			// 验证请求数据
+			const result = taskSchema.safeParse(taskData);
+			if (!result.success) {
+				return c.json({ 
+					success: false, 
+					error: "Invalid task data" 
+				}, 400);
+			}
+			
+			// 确保title属性存在
+			const validatedTask: Task = {
+				title: result.data.title,
+				description: result.data.description,
+				status: result.data.status
+			};
+			
+			const createdTask = await taskService.createTask(validatedTask);
+			
+			return c.json({
+				success: true,
+				task: createdTask
+			}, 201);
+		} catch (error) {
+			console.error("Error creating task:", error);
+			return c.json({ 
+				success: false, 
+				error: "Failed to create task" 
+			}, 500);
+		}
 	}
-}
+);
+
+export default app;
+
+
