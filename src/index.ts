@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { errorHandler, logger } from "./middlewares";
+import { errorHandler, logger, responseMiddleware } from "./middlewares";
 import { authJwtMiddleware, userMiddleware } from "./middlewares/authMiddleware";
 import { registerApiRoutes } from "./routes/api";
 import { OpenAPIHono } from "@hono/zod-openapi";
@@ -25,6 +25,9 @@ app.use('*', authJwtMiddleware);
 // 注册用户信息中间件
 app.use('*', userMiddleware);
 
+// 注册响应格式化中间件（在其他中间件之后注册，但在路由注册之前）
+app.use('*', responseMiddleware);
+
 // 注册全局错误处理中间件
 app.onError(errorHandler);
 
@@ -33,9 +36,7 @@ registerApiRoutes(app);
 
 // 添加API文档UI
 app.get('/', (c) => {
-  return swaggerUI({
-    url: '/api/doc'
-  })(c);
+  return swaggerUI({ url: '/api/doc' })(c);
 });
 
 // 导出Hono应用

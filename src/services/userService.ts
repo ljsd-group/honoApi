@@ -1,9 +1,10 @@
-import { mysqlPool } from "../config/database";
-import { RowDataPacket } from "mysql2";
+import { pgPool, db } from "../config/database";
+import { users } from "../db/schema";
+import { eq } from "drizzle-orm";
 import bcrypt from 'bcryptjs';
 
 // 定义用户记录类型
-export interface UserRecord extends RowDataPacket {
+export interface UserRecord {
   id: number;
   username: string;
   password: string;
@@ -19,21 +20,27 @@ export interface User {
   email: string;
 }
 
+// 添加一个独立的findUserById函数
+export async function findUserById(id: string | number): Promise<any> {
+  const userService = new UserService();
+  return await userService.getUserById(Number(id));
+}
+
 export class UserService {
   // 通过用户名查找用户
   async findByUsername(username: string): Promise<UserRecord | null> {
     try {
-      const connection = await mysqlPool.getConnection();
+      const client = await pgPool.connect();
       try {
         // 查询用户
-        const [rows] = await connection.execute<UserRecord[]>(
-          'SELECT * FROM users WHERE username = ?',
+        const result = await client.query(
+          'SELECT * FROM users WHERE username = $1',
           [username]
         );
         
-        return rows.length > 0 ? rows[0] : null;
+        return result.rows.length > 0 ? result.rows[0] as UserRecord : null;
       } finally {
-        connection.release();
+        client.release();
       }
     } catch (error) {
       console.error(`查找用户${username}失败:`, error);
@@ -45,7 +52,7 @@ export class UserService {
   async validateUser(username: string, password: string): Promise<{ valid: boolean, user: UserRecord | null }> {
     try {
       const user = await this.findByUsername(username);
-      console.log(user)
+      
       if (!user) {
         return { valid: false, user: null };
       }
@@ -79,17 +86,17 @@ export class UserService {
   // 创建新用户
   async createUser(userData: User): Promise<number> {
     try {
-      const connection = await mysqlPool.getConnection();
+      const client = await pgPool.connect();
       try {
-        // 插入用户
-        const [result] = await connection.execute(
-          'INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
+        // 插入用户并返回ID
+        const result = await client.query(
+          'INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING id',
           [userData.username, userData.password, userData.email]
         );
         
-        return (result as any).insertId;
+        return result.rows[0].id;
       } finally {
-        connection.release();
+        client.release();
       }
     } catch (error) {
       console.error('创建用户失败:', error);
@@ -100,13 +107,15 @@ export class UserService {
   // 获取所有用户
   async getAllUsers(): Promise<UserRecord[]> {
     try {
-      const connection = await mysqlPool.getConnection();
+      const client = await pgPool.connect();
       try {
         // 查询所有用户
-        const [rows] = await connection.execute<UserRecord[]>('SELECT id, username, email, created_at, updated_at FROM users');
-        return rows;
+        const result = await client.query(
+          'SELECT id, username, email, created_at, updated_at FROM users'
+        );
+        return result.rows as UserRecord[];
       } finally {
-        connection.release();
+        client.release();
       }
     } catch (error) {
       console.error('获取所有用户失败:', error);
@@ -117,17 +126,17 @@ export class UserService {
   // 通过ID获取用户
   async getUserById(id: number): Promise<UserRecord | null> {
     try {
-      const connection = await mysqlPool.getConnection();
+      const client = await pgPool.connect();
       try {
         // 查询用户
-        const [rows] = await connection.execute<UserRecord[]>(
-          'SELECT id, username, email, created_at, updated_at FROM users WHERE id = ?',
+        const result = await client.query(
+          'SELECT id, username, email, created_at, updated_at FROM users WHERE id = $1',
           [id]
         );
         
-        return rows.length > 0 ? rows[0] : null;
+        return result.rows.length > 0 ? result.rows[0] as UserRecord : null;
       } finally {
-        connection.release();
+        client.release();
       }
     } catch (error) {
       console.error(`获取用户ID=${id}失败:`, error);

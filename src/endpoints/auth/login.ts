@@ -4,6 +4,7 @@ import { sign } from "hono/jwt";
 import { JWT_CONFIG } from "../../config/auth";
 import { UserService } from "../../services/userService";
 import { Handler } from "hono";
+import { success, error, ResponseCode } from "../../utils/response";
 
 // 环境类型定义
 type Env = {
@@ -22,18 +23,21 @@ const loginSchema = z.object({
 
 // 响应类型
 const loginResponseSchema = z.object({
-  success: z.boolean(),
-  token: z.string(),
-  user: z.object({
-    id: z.number(),
-    username: z.string(),
-    email: z.string(),
-  })
+  code: z.number(),
+  data: z.object({
+    token: z.string(),
+    user: z.object({
+      id: z.number(),
+      username: z.string(),
+      email: z.string(),
+    })
+  }),
+  message: z.string()
 });
 
 const errorResponseSchema = z.object({
-  success: z.boolean(),
-  error: z.string()
+  code: z.number(),
+  message: z.string()
 });
 
 // 登录处理函数
@@ -48,10 +52,7 @@ const loginHandler: Handler<Env> = async (c) => {
     
     // 如果验证失败
     if (!valid || !user) {
-      return c.json({
-        success: false,
-        error: "用户名或密码错误"
-      }, 401);
+      return error(c, "用户名或密码错误", ResponseCode.UNAUTHORIZED, 401);
     }
     
     // 生成JWT令牌
@@ -62,21 +63,17 @@ const loginHandler: Handler<Env> = async (c) => {
     }, JWT_CONFIG.SECRET || 'default_secret');
     
     // 返回成功响应
-    return c.json({
-      success: true,
+    return success(c, {
       token,
       user: {
         id: user.id,
         username: user.username,
         email: user.email
       }
-    });
-  } catch (error) {
-    console.error("登录处理发生错误:", error);
-    return c.json({
-      success: false,
-      error: "登录处理发生错误"
-    }, 500);
+    }, "登录成功", ResponseCode.SUCCESS);
+  } catch (err) {
+    console.error("登录处理发生错误:", err);
+    return error(c, "登录处理发生错误", ResponseCode.INTERNAL_ERROR, 500);
   }
 };
 

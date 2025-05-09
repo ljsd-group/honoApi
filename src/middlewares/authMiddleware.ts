@@ -11,9 +11,10 @@ import { JWT_CONFIG } from "../config/auth";
 declare module 'hono' {
   interface ContextVariables {
     user?: {
-      id: string;
+      id: number;
       username: string;
-      role: string;
+      role?: string;
+      email?: string;
     };
   }
 }
@@ -89,14 +90,15 @@ export async function userMiddleware(c: Context, next: Next) {
     
     // 验证用户是否存在
     if (payload.sub) {
-      const user = findUserById(payload.sub);
+      const user = await findUserById(payload.sub);
       
       if (user) {
         // 将用户信息注入到Context中
         c.set('user', {
           id: user.id,
           username: user.username,
-          role: user.role
+          role: 'user', // 默认角色为user
+          email: user.email
         });
       } else {
         return error(c, '用户不存在', ResponseCode.UNAUTHORIZED, 401);

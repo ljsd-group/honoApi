@@ -9,17 +9,25 @@
 		"deploy": "vite build && wrangler deploy",
 		"start": "vite dev",
 		"cf-typegen": "wrangler types",
-		"migrate": "node scripts/migrate.js"
+		"migrate": "node scripts/migrate.js",
+		"seed": "npx tsx scripts/seed.ts",
+		"add-test-users": "npx tsx scripts/add-test-users.ts",
+		"add-tasks": "npx tsx scripts/add-tasks.ts",
+		"init-db": "npx tsx scripts/init-database.ts",
+		"check-data": "npx tsx scripts/check-data.ts"
 	},
 	"dependencies": {
 		"@hono/swagger-ui": "^0.5.1",
 		"@hono/zod-openapi": "^0.19.6",
 		"@hono/zod-validator": "^0.5.0",
+		"@neondatabase/serverless": "^1.0.0",
 		"bcryptjs": "^3.0.2",
 		"chanfana": "^2.6.3",
 		"drizzle-orm": "^0.43.1",
 		"hono": "^4.7.8",
 		"mysql2": "^3.14.1",
+		"pg": "^8.15.6",
+		"pg-hstore": "^2.3.4",
 		"zod": "^3.24.1"
 	},
 	"devDependencies": {
