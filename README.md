@@ -1,5 +1,4 @@
-# honoStudy - Hono学习项目
-
+# honoApi
 ## Cloudflare Workers OpenAPI 3.1
 
 这是一个使用 [chanfana](https://github.com/cloudflare/chanfana) 和 [Hono](https://github.com/honojs/hono) 框架的 Cloudflare Worker，支持 OpenAPI 3.1。
