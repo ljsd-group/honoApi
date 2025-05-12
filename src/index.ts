@@ -7,6 +7,24 @@ import { swaggerUI } from "@hono/swagger-ui";
 import { cors } from 'hono/cors';
 import { CORS_CONFIG } from './config/cors';
 
+// apple-app-site-association 文件内容
+const appleAppSiteAssociation = {
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "HV7PRLH23M.com.lanjin.AIgenius.app",
+        "paths": [ "*" ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "HV7PRLH23M.com.lanjin.AIgenius.app"
+    ]
+  }
+};
+
 // 定义环境类型
 type Env = {
   Bindings: any;
@@ -18,6 +36,12 @@ const app = new OpenAPIHono<Env>();
 // ========================= 重要 =============================
 // 配置CORS中间件（放在最前面，确保所有请求都能正确处理CORS）
 app.use('*', cors(CORS_CONFIG));
+
+// 手动添加 apple-app-site-association 路由
+app.get('/.well-known/apple-app-site-association', (c) => {
+  c.header('Content-Type', 'application/json');
+  return c.json(appleAppSiteAssociation);
+});
 
 // 将 API 文档相关的路由放在所有中间件注册之前，这样它们不会受到中间件的影响
 

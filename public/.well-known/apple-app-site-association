@@ -1,0 +1,16 @@
+{
+    "applinks": {
+      "apps": [],
+      "details": [
+        {
+          "appID": "HV7PRLH23M.com.lanjin.AIgenius.app",
+          "paths": [ "*" ]
+        }
+      ]
+    },
+    "webcredentials": {
+      "apps": [
+        "HV7PRLH23M.com.lanjin.AIgenius.app"
+      ]
+    }
+  }
