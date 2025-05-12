@@ -1,15 +1,34 @@
+import { ENV } from './env';
+
 /**
  * JWT配置
  */
 export const JWT_CONFIG = {
-  // JWT密钥（实际生产环境应该使用环境变量）
-  SECRET: 'your-secret-key-change-in-production',
+  // JWT密钥（从环境变量中获取）
+  SECRET: ENV.JWT.SECRET,
   
-  // 过期时间（24小时）
-  EXPIRES_IN: '24h',
+  // 过期时间
+  EXPIRES_IN: ENV.JWT.EXPIRES_IN,
   
   // JWT算法
-  ALGORITHM: 'HS256'
+  ALGORITHM: ENV.JWT.ALGORITHM
+};
+
+/**
+ * Auth0 配置
+ */
+export const AUTH0_CONFIG = {
+  // Auth0 域名
+  DOMAIN: ENV.AUTH0.DOMAIN,
+  
+  // 客户端ID
+  CLIENT_ID: ENV.AUTH0.CLIENT_ID,
+  
+  // 客户端密钥
+  CLIENT_SECRET: ENV.AUTH0.CLIENT_SECRET,
+  
+  // 回调URL
+  REDIRECT_URI: ENV.AUTH0.REDIRECT_URI
 };
 
 /**
@@ -20,6 +39,8 @@ export const AUTH_WHITELIST = [
   // 登录相关API不需要鉴权
   '/api/auth/login',
   '/api/auth/register',
+  '/api/auth/callback',  // Auth0 回调端点
+  '/api/auth/auth0',     // Auth0 登录端点
   
   // 文档和健康检查API不需要鉴权
   '/',

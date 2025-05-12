@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import loginApp from "../endpoints/auth/login";
+import auth0CallbackApp from "../endpoints/auth/auth0Callback";
+import auth0LoginApp from "../endpoints/auth/auth0Login";
 
 // 定义环境类型
 type Env = {
@@ -12,6 +14,10 @@ export const authRouter = new OpenAPIHono<Env>();
 
 // 挂载登录端点
 authRouter.route('/login', loginApp);
+
+// 挂载 Auth0 相关端点
+authRouter.route('/callback', auth0CallbackApp);
+authRouter.route('/auth0', auth0LoginApp);
 
 /**
  * 注册认证相关路由

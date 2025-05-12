@@ -4,6 +4,8 @@ import { authJwtMiddleware, userMiddleware } from "./middlewares/authMiddleware"
 import { registerApiRoutes } from "./routes/api";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
+import { cors } from 'hono/cors';
+import { CORS_CONFIG } from './config/cors';
 
 // 定义环境类型
 type Env = {
@@ -14,6 +16,9 @@ type Env = {
 const app = new OpenAPIHono<Env>();
 
 // ========================= 重要 =============================
+// 配置CORS中间件（放在最前面，确保所有请求都能正确处理CORS）
+app.use('*', cors(CORS_CONFIG));
+
 // 将 API 文档相关的路由放在所有中间件注册之前，这样它们不会受到中间件的影响
 
 // 注册API路由（在添加文档路由之前注册，确保所有API定义被收集）
