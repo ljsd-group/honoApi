@@ -25,7 +25,7 @@ export const AUTH_WHITELIST = [
   '/',
   '/openapi.json',
   '/api/health',
-  
+  '/api/doc',
   // 静态资源不需要鉴权
   /^\/assets\//,
   /^\/public\//,

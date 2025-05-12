@@ -3,6 +3,7 @@ import taskCreateApp from "../endpoints/taskCreate";
 import taskFetchApp from "../endpoints/taskFetch";
 import taskDeleteApp from "../endpoints/taskDelete";
 import { Hono } from "hono";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { registerAuthRoutes } from "./authRoutes";
 
 // 定义环境类型
@@ -11,10 +12,10 @@ type Env = {
 };
 
 // 创建API路由器
-export const apiRouter = new Hono<Env>();
+export const apiRouter = new OpenAPIHono<Env>();
 
 // 注册任务相关API
-const taskRouter = new Hono<Env>();
+const taskRouter = new OpenAPIHono<Env>();
 taskRouter.route('/', taskListApp);
 taskRouter.route('/', taskCreateApp);
 taskRouter.route('/:id', taskFetchApp);
@@ -27,7 +28,7 @@ apiRouter.route('/tasks', taskRouter);
  * 注册所有API路由
  * @param app Hono应用实例
  */
-export function registerApiRoutes(app: Hono<Env>) {
+export function registerApiRoutes(app: Hono<Env> | OpenAPIHono<Env>) {
   // 注册认证路由
   registerAuthRoutes(app);
   

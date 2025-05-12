@@ -10,11 +10,64 @@ type Env = {
   Bindings: any;
 };
 
-// 创建Hono应用
-const app = new Hono<Env>();
+// 创建OpenAPIHono应用作为主应用
+const app = new OpenAPIHono<Env>();
 
-// 创建OpenAPI应用
-const openApiApp = new OpenAPIHono<Env>();
+// ========================= 重要 =============================
+// 将 API 文档相关的路由放在所有中间件注册之前，这样它们不会受到中间件的影响
+
+// 注册API路由（在添加文档路由之前注册，确保所有API定义被收集）
+registerApiRoutes(app);
+
+// 添加API文档UI到根路径
+app.get('/', (c) => {
+  // 返回 Swagger UI 界面
+  return c.html(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="SwaggerUI" />
+  <title>API Documentation</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@latest/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@latest/swagger-ui-bundle.js" crossorigin></script>
+  <script>
+    window.onload = () => {
+      window.ui = SwaggerUIBundle({
+        url: '/api/doc',
+        dom_id: '#swagger-ui',
+      });
+    };
+  </script>
+</body>
+</html>
+  `);
+});
+
+// 提供自动生成的OpenAPI规范文档
+app.doc('/api/doc', {
+  openapi: '3.0.0',
+  info: {
+    title: 'Hono 任务管理 API',
+    version: '1.0.0',
+    description: '使用Hono框架开发的任务管理API'
+  },
+  tags: [
+    {
+      name: '任务管理',
+      description: '任务相关的API操作'
+    },
+    {
+      name: 'Tasks',
+      description: '任务相关的API操作'
+    }
+  ]
+});
+// ========================= 重要 =============================
 
 // 注册全局中间件
 app.use('*', logger);
@@ -30,14 +83,6 @@ app.use('*', responseMiddleware);
 
 // 注册全局错误处理中间件
 app.onError(errorHandler);
-
-// 注册API路由
-registerApiRoutes(app);
-
-// 添加API文档UI
-app.get('/', (c) => {
-  return swaggerUI({ url: '/api/doc' })(c);
-});
 
 // 导出Hono应用
 export default app;
