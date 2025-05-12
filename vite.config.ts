@@ -24,6 +24,19 @@ export default defineConfig({
   build: {
     // 使用最新的ES标准，Cloudflare Workers支持最新的JS特性
     target: 'esnext',
-    minify: true
+    minify: true,
+    // 指定构建入口点
+    lib: {
+      entry: resolve(__dirname, 'src/index.ts'),
+      name: 'honoapi',
+      formats: ['es'],
+      fileName: 'index'
+    },
+    // 确保不会打包node_modules中的依赖
+    rollupOptions: {
+      external: [
+        'cloudflare:sockets'
+      ]
+    }
   }
 }); 
