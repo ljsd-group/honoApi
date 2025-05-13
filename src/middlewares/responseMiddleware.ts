@@ -8,47 +8,29 @@ import { ResponseCode } from '../utils/response';
  * 失败: { code: 错误码, message: '错误消息' }
  */
 export async function responseMiddleware(c: Context, next: Next) {
-  // 先执行后续中间件
-  await next();
+  // 保存原始json方法
+  const originalJson = c.json;
   
-  // 获取响应
-  const response = c.res;
-  
-  // 如果响应不是JSON格式，则不处理
-  const contentType = response.headers.get('content-type');
-  if (!contentType || !contentType.includes('application/json')) {
-    return;
-  }
-  
-  try {
-    // 获取原始响应
-    const originalBody = await response.json();
+  // 替换json方法以修改返回格式
+  c.json = function(data: any, status?: number) {
+    const responseStatus = status || 200;
     
-    // 如果已经是标准格式，直接返回
-    if (originalBody && typeof originalBody === 'object' && 'code' in originalBody) {
-      return;
+    // 检查是否已经是标准格式
+    if (data && typeof data === 'object' && 'code' in data) {
+      return originalJson.call(c, data, responseStatus);
     }
     
     // 根据状态码判断是成功还是失败
-    const status = response.status;
-    if (status >= 200 && status < 300) {
+    if (responseStatus >= 200 && responseStatus < 300) {
       // 成功响应
-      const newResponse = {
+      return originalJson.call(c, {
         code: ResponseCode.SUCCESS,
-        data: originalBody,
+        data: data,
         message: '请求成功'
-      };
-      
-      // 创建新的响应
-      c.res = new Response(JSON.stringify(newResponse), {
-        status: status,
-        headers: {
-          'content-type': 'application/json'
-        }
-      });
+      }, responseStatus);
     } else {
       // 错误响应
-      const errorBody = originalBody as Record<string, unknown>;
+      const errorBody = typeof data === 'object' ? data : {};
       const message = 
         typeof errorBody.error === 'string' ? errorBody.error : 
         typeof errorBody.message === 'string' ? errorBody.message : 
@@ -57,7 +39,7 @@ export async function responseMiddleware(c: Context, next: Next) {
       let code = ResponseCode.INTERNAL_ERROR;
       
       // 根据HTTP状态码选择适当的错误码
-      switch(status) {
+      switch(responseStatus) {
         case 400: code = ResponseCode.BAD_REQUEST; break;
         case 401: code = ResponseCode.UNAUTHORIZED; break;
         case 403: code = ResponseCode.FORBIDDEN; break;
@@ -65,21 +47,13 @@ export async function responseMiddleware(c: Context, next: Next) {
         default: code = ResponseCode.INTERNAL_ERROR;
       }
       
-      const newResponse = {
+      return originalJson.call(c, {
         code: code,
         message: message
-      };
-      
-      // 创建新的响应
-      c.res = new Response(JSON.stringify(newResponse), {
-        status: status,
-        headers: {
-          'content-type': 'application/json'
-        }
-      });
+      }, responseStatus);
     }
-  } catch (error) {
-    // 如果处理过程中出错，不修改原响应
-    console.error('处理响应时出错:', error);
-  }
+  };
+  
+  // 执行后续中间件
+  await next();
 } 

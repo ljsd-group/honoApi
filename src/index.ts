@@ -37,15 +37,25 @@ const app = new OpenAPIHono<Env>();
 // 配置CORS中间件（放在最前面，确保所有请求都能正确处理CORS）
 app.use('*', cors(CORS_CONFIG));
 
+// 注册全局中间件
+app.use('*', logger);
+
+// 注册JWT身份验证中间件
+app.use('*', authJwtMiddleware);
+
+// 注册用户信息中间件
+app.use('*', userMiddleware);
+
+// 注册响应格式化中间件
+app.use('*', responseMiddleware);
+
 // 手动添加 apple-app-site-association 路由
 app.get('/.well-known/apple-app-site-association', (c) => {
   c.header('Content-Type', 'application/json');
   return c.json(appleAppSiteAssociation);
 });
 
-// 将 API 文档相关的路由放在所有中间件注册之前，这样它们不会受到中间件的影响
-
-// 注册API路由（在添加文档路由之前注册，确保所有API定义被收集）
+// 注册API路由（在中间件之后注册，确保中间件能拦截所有API路由）
 registerApiRoutes(app);
 
 // 添加API文档UI到根路径
@@ -88,18 +98,6 @@ app.doc('/api/doc', {
   tags: []
 });
 // ========================= 重要 =============================
-
-// 注册全局中间件
-app.use('*', logger);
-
-// 注册JWT身份验证中间件
-app.use('*', authJwtMiddleware);
-
-// 注册用户信息中间件
-app.use('*', userMiddleware);
-
-// 注册响应格式化中间件（在其他中间件之后注册，但在路由注册之前）
-app.use('*', responseMiddleware);
 
 // 注册全局错误处理中间件
 app.onError(errorHandler);
