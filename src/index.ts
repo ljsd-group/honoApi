@@ -85,16 +85,7 @@ app.doc('/api/doc', {
     version: '1.0.0',
     description: '使用Hono框架开发的任务管理API'
   },
-  tags: [
-    {
-      name: '任务管理',
-      description: '任务相关的API操作'
-    },
-    {
-      name: 'Tasks',
-      description: '任务相关的API操作'
-    }
-  ]
+  tags: []
 });
 // ========================= 重要 =============================
 
