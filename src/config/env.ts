@@ -110,6 +110,9 @@ export const ENV = {
   HOST: getEnvString('HOST', '0.0.0.0'),
   API_BASE_PATH: getEnvString('API_BASE_PATH', '/api'),
   
+  // 第三方API基础URL
+  THIRD_PARTY_API: getEnvString('THIRD_PARTY_API', 'http://192.168.100.13:8080'),
+  
   // 前端应用URL
   FRONTEND_URL: getEnvString('FRONTEND_URL', 
     currentEnv === 'production' 

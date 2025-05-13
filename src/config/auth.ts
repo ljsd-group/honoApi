@@ -41,7 +41,11 @@ export const AUTH_WHITELIST = [
   '/api/auth/register',
   '/api/auth/callback',  // Auth0 回调端点
   '/api/auth/auth0',     // Auth0 登录端点
+  '/api/auth/verify',    // Auth0 令牌验证端点
   '/api/auth/apple-app-site-association',
+  
+  // 代理API不需要鉴权
+  '/api/proxy/find-subscribe',
   
   // 文档和健康检查API不需要鉴权
   '/',
