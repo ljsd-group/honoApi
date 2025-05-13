@@ -65,6 +65,26 @@ export class AccountService {
     }
   }
   
+  // 根据设备号和Auth0 sub查找账户
+  async findAccountByDeviceAndAuth0Sub(deviceNumber: string, auth0Sub: string) {
+    try {
+      const result = await db.select()
+        .from(accounts)
+        .where(
+          and(
+            eq(accounts.device_number, deviceNumber),
+            eq(accounts.auth0_sub, auth0Sub)
+          )
+        )
+        .limit(1);
+      
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      console.error('通过设备号和Auth0 sub查找账户失败:', error);
+      throw error;
+    }
+  }
+  
   // 创建账户
   async createAccount(accountData: Account) {
     try {

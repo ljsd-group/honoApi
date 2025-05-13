@@ -134,12 +134,12 @@ app.openapi(
       
       // 先检查是否有传入device_number
       if (device_number) {
-        // 通过device_number查找账户
-        const existingAccount = await accountService.findAccountByDeviceNumber(device_number);
+        // 通过device_number和auth0_sub查找账户
+        const existingAccount = await accountService.findAccountByDeviceAndAuth0Sub(device_number, userInfo.sub);
         
         if (existingAccount) {
           // 如果找到现有账户，则更新信息
-          console.log('找到已存在的设备号，更新账户信息');
+          console.log('找到已存在的设备号和Auth0账户，更新账户信息');
           account = await accountService.updateAccount({
             ...existingAccount,
             auth0_sub: userInfo.sub,
@@ -150,8 +150,8 @@ app.openapi(
             picture: userInfo.picture
           });
         } else {
-          // 如果没找到，创建新账户
-          console.log('设备号未关联账户，创建新账户');
+          // 如果没找到匹配的设备号和Auth0账户组合，创建新账户
+          console.log('设备号和Auth0账户组合不存在，创建新账户');
           account = await accountService.createAccount({
             auth0_sub: userInfo.sub,
             name: userInfo.name,
