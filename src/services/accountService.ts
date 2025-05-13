@@ -35,6 +35,21 @@ export class AccountService {
     }
   }
   
+  // 根据ID查找账户
+  async findAccountById(id: number) {
+    try {
+      const result = await db.select()
+        .from(accounts)
+        .where(eq(accounts.id, id))
+        .limit(1);
+      
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      console.error('通过ID查找账户失败:', error);
+      throw error;
+    }
+  }
+  
   // 根据设备号查找账户
   async findAccountByDeviceNumber(deviceNumber: string) {
     try {

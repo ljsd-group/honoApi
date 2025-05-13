@@ -4,6 +4,7 @@ import { findUserById } from "../services/userService";
 import { AUTH_WHITELIST } from "../config/auth";
 import { ResponseCode, error } from "../utils/response";
 import { JWT_CONFIG } from "../config/auth";
+import { AccountService } from "../services/accountService";
 
 /**
  * 声明增强的Context类型，包含用户信息
@@ -12,12 +13,18 @@ declare module 'hono' {
   interface ContextVariables {
     user?: {
       id: number;
-      username: string;
+      username?: string;
       role?: string;
       email?: string;
+      auth0_sub?: string;
+      device_number?: string;
+      isAuth0User?: boolean;
     };
   }
 }
+
+// 创建AccountService实例
+const accountService = new AccountService();
 
 /**
  * 判断路径是否在白名单中
@@ -107,6 +114,7 @@ export async function authJwtMiddleware(c: Context, next: Next) {
 /**
  * 用户信息中间件
  * 将JWT负载中的用户信息注入到Context中
+ * 支持两种类型的用户：普通用户(users表)和Auth0用户(accounts表)
  */
 export async function userMiddleware(c: Context, next: Next) {
   // 如果路径在白名单中，跳过处理
@@ -118,8 +126,32 @@ export async function userMiddleware(c: Context, next: Next) {
     // 获取JWT负载（由JWT中间件解析并放入上下文）
     const payload = c.get('jwtPayload');
     
-    // 验证用户是否存在
-    if (payload.sub) {
+    if (!payload || !payload.sub) {
+      return next();
+    }
+    
+    // 判断是Auth0用户还是普通用户
+    const isAuth0User = !!payload.auth0_sub;
+    
+    if (isAuth0User) {
+      // 处理Auth0用户 - payload.sub是accounts表的ID
+      const account = await accountService.findAccountById(Number(payload.sub));
+      
+      if (account) {
+        // 将Auth0用户信息注入到Context中
+        c.set('user', {
+          id: account.id, // accounts表的ID
+          email: account.email,
+          auth0_sub: account.auth0_sub,
+          device_number: account.device_number,
+          isAuth0User: true,
+          role: 'user' // 默认角色
+        });
+      } else {
+        return error(c, 'Auth0账户不存在', ResponseCode.UNAUTHORIZED, 401);
+      }
+    } else {
+      // 处理普通用户 - payload.sub是users表的ID
       const user = await findUserById(payload.sub);
       
       if (user) {
@@ -128,7 +160,8 @@ export async function userMiddleware(c: Context, next: Next) {
           id: user.id,
           username: user.username,
           role: 'user', // 默认角色为user
-          email: user.email
+          email: user.email,
+          isAuth0User: false
         });
       } else {
         return error(c, '用户不存在', ResponseCode.UNAUTHORIZED, 401);
@@ -137,7 +170,8 @@ export async function userMiddleware(c: Context, next: Next) {
     
     return next();
   } catch (err) {
-    // 如果出现错误，继续执行（JWT中间件会处理无效的令牌）
+    console.error('用户中间件处理错误:', err);
+    // 如果出现错误，继续执行
     return next();
   }
 }
