@@ -122,7 +122,14 @@ app.openapi(
       }
 
       const userInfo = await userInfoResponse.json() as Auth0UserInfo;
-      
+      // let userInfo: Auth0UserInfo = {
+      //   sub: `auth0|${Date.now()}`, // 生成一个唯一标识符
+      //   name: "测试用户",
+      //   nickname: "测试用户",
+      //   email: "test@example.com",
+      //   email_verified: true,
+      //   picture: "https://example.com/default-avatar.png"
+      // };
       let account;
       
       // 先检查是否有传入device_number
@@ -181,7 +188,6 @@ app.openapi(
       // 返回用户信息、账户信息和JWT令牌
       return success(c, {
         token, // 新增JWT令牌
-        user: userInfo,
         account: account
       }, "令牌验证成功");
     } catch (err) {
