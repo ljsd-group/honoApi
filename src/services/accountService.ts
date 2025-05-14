@@ -13,6 +13,7 @@ export interface Account {
   email_verified?: boolean;
   picture?: string;
   device_number?: string;
+  loginType?: number;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -119,6 +120,7 @@ export class AccountService {
           email_verified: accountData.email_verified,
           picture: accountData.picture,
           device_number: accountData.device_number,
+          loginType: accountData.loginType,
           updated_at: new Date()
         })
         .where(eq(accounts.id, accountData.id));
@@ -146,6 +148,7 @@ export class AccountService {
             email_verified: accountData.email_verified,
             picture: accountData.picture,
             device_number: accountData.device_number,
+            loginType: accountData.loginType,
             updated_at: new Date()
           })
           .where(eq(accounts.auth0_sub, accountData.auth0_sub));

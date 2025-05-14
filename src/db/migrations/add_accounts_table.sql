@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   email_verified BOOLEAN DEFAULT FALSE,
   picture VARCHAR(1000),
   device_number VARCHAR(255),
+  login_type INTEGER DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -20,4 +21,5 @@ CREATE INDEX IF NOT EXISTS idx_accounts_device_number ON accounts(device_number)
 -- 添加comments
 COMMENT ON TABLE accounts IS 'Auth0账户信息表';
 COMMENT ON COLUMN accounts.auth0_sub IS 'Auth0用户唯一标识符';
-COMMENT ON COLUMN accounts.device_number IS '设备号'; 
+COMMENT ON COLUMN accounts.device_number IS '设备号';
+COMMENT ON COLUMN accounts.login_type IS '登录类型：1=Apple登录，2=Google登录'; 

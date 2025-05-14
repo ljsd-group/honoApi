@@ -22,6 +22,12 @@ interface Auth0UserInfo {
   [key: string]: any; // 其他可能的字段
 }
 
+// 登录类型枚举
+const LOGIN_TYPE = {
+  APPLE: 1,   // 苹果登录
+  GOOGLE: 2   // 谷歌登录
+};
+
 // 创建 Auth0 Token 验证端点
 const app = new OpenAPIHono<Env>();
 const accountService = new AccountService();
@@ -29,7 +35,9 @@ const accountService = new AccountService();
 // 定义请求验证模式
 const auth0VerifySchema = z.object({
   access_token: z.string().min(1, "访问令牌不能为空"),
-  device_number: z.string().optional() // 可选设备号
+  loginType: z.number().refine(val => val === LOGIN_TYPE.APPLE || val === LOGIN_TYPE.GOOGLE, {
+    message: "登录类型必须是1(Apple)或2(Google)"
+  }).default(LOGIN_TYPE.APPLE)
 });
 
 // 定义响应类型
@@ -46,7 +54,8 @@ const auth0VerifyResponseSchema = z.object({
     account: z.object({
       id: z.number().optional(),
       auth0_sub: z.string(),
-      device_number: z.string().optional()
+      device_number: z.string().optional(),
+      loginType: z.number().optional()
     }).optional()
   }),
   message: z.string()
@@ -56,6 +65,88 @@ const errorResponseSchema = z.object({
   code: z.number(),
   message: z.string()
 });
+
+/**
+ * 检查字符串是否为ISO日期格式
+ * @param str 要检查的字符串
+ * @returns 是否为ISO日期格式
+ */
+function isISODateString(str: string): boolean {
+  if (typeof str !== 'string') return false;
+  
+  // ISO 8601日期格式的正则表达式
+  const isoDatePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[\+\-]\d{2}:\d{2})?$/;
+  return isoDatePattern.test(str);
+}
+
+/**
+ * 将UTC时间字符串转换为东八区(UTC+8)时间字符串
+ * @param utcDateString UTC时间字符串
+ * @returns 东八区时间字符串
+ */
+function convertToUTC8(utcDateString: string): string {
+  try {
+    // 创建日期对象
+    const date = new Date(utcDateString);
+    
+    // 获取UTC时间戳
+    const utcTimestamp = date.getTime();
+    
+    // 转换为东八区时间 (UTC+8，增加8小时)
+    const beijingTimestamp = utcTimestamp + (8 * 60 * 60 * 1000);
+    
+    // 创建新的日期对象（东八区时间）
+    const beijingDate = new Date(beijingTimestamp);
+    
+    // 返回ISO格式的东八区时间字符串
+    return beijingDate.toISOString();
+  } catch (err) {
+    console.error("时间转换错误:", err);
+    // 转换出错时返回原字符串
+    return utcDateString;
+  }
+}
+
+/**
+ * 处理对象中的null值，将它们替换为空字符串，并调整日期时区
+ * @param obj 需要处理的对象
+ * @returns 处理后的对象
+ */
+function replaceNullWithEmptyString(obj: any): any {
+  // 非对象直接返回
+  if (obj === null) return '';
+  if (typeof obj !== 'object' || obj === undefined) return obj;
+  
+  // 如果是日期对象，转换为东八区时间
+  if (obj instanceof Date) {
+    return convertToUTC8(obj.toISOString());
+  }
+  
+  // 如果是数组，处理每个元素
+  if (Array.isArray(obj)) {
+    return obj.map(item => replaceNullWithEmptyString(item));
+  }
+  
+  const result: any = {};
+  
+  for (const key in obj) {
+    if (obj[key] === null) {
+      // null值替换为空字符串
+      result[key] = '';
+    } else if (typeof obj[key] === 'string' && isISODateString(obj[key])) {
+      // ISO日期字符串转换为东八区时间
+      result[key] = convertToUTC8(obj[key]);
+    } else if (typeof obj[key] === 'object') {
+      // 递归处理嵌套对象
+      result[key] = replaceNullWithEmptyString(obj[key]);
+    } else {
+      // 其他值保持不变
+      result[key] = obj[key];
+    }
+  }
+  
+  return result;
+}
 
 app.openapi(
   {
@@ -103,9 +194,12 @@ app.openapi(
   // 使用 any 类型避免类型错误
   (async (c: any) => {
     try {
-      // 获取请求体中的访问令牌和设备号
+      // 获取请求体中的访问令牌和登录类型
       const body = await c.req.json();
-      const { access_token, device_number } = body;
+      const { access_token, loginType = LOGIN_TYPE.APPLE } = body;
+      
+      // 从请求头获取设备号
+      const device_number = c.req.header("deviceNumber");
       
       if (!access_token) {
         return error(c, "访问令牌不能为空", ResponseCode.BAD_REQUEST, 400);
@@ -147,7 +241,8 @@ app.openapi(
             nickname: userInfo.nickname,
             email: userInfo.email,
             email_verified: userInfo.email_verified,
-            picture: userInfo.picture
+            picture: userInfo.picture,
+            loginType: loginType // 保存登录类型
           });
         } else {
           // 如果没找到匹配的设备号和Auth0账户组合，创建新账户
@@ -159,7 +254,8 @@ app.openapi(
             email: userInfo.email,
             email_verified: userInfo.email_verified,
             picture: userInfo.picture,
-            device_number: device_number
+            device_number: device_number,
+            loginType: loginType // 保存登录类型
           });
         }
       } else {
@@ -171,7 +267,8 @@ app.openapi(
           nickname: userInfo.nickname,
           email: userInfo.email,
           email_verified: userInfo.email_verified,
-          picture: userInfo.picture
+          picture: userInfo.picture,
+          loginType: loginType // 保存登录类型
         });
       }
 
@@ -182,13 +279,17 @@ app.openapi(
         name: userInfo.name || '',
         email: userInfo.email || '',
         device_number: account.device_number || '',
+        loginType: loginType, // 包含登录类型
         exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24小时后过期
       }, JWT_CONFIG.SECRET || 'default_secret');
+
+      // 处理账户中的null值，替换为空字符串
+      const processedAccount = replaceNullWithEmptyString(account);
 
       // 返回用户信息、账户信息和JWT令牌
       return success(c, {
         token, // 新增JWT令牌
-        account: account
+        account: processedAccount
       }, "令牌验证成功");
     } catch (err) {
       console.error("令牌验证错误:", err);

@@ -21,6 +21,7 @@ export const accounts = pgTable('accounts', {
   email_verified: boolean('email_verified').default(false),
   picture: varchar('picture', { length: 1000 }),
   device_number: varchar('device_number', { length: 255 }), // 设备号
+  loginType: integer('login_type').default(1), // 登录类型：1=Apple，2=Google
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow()
 }); 
