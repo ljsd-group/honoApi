@@ -1,5 +1,5 @@
 import { Context, Next } from "hono";
-import { jwt } from "hono/jwt";
+import { jwt, verify } from "hono/jwt";
 import { findUserById } from "../services/userService";
 import { AUTH_WHITELIST } from "../config/auth";
 import { ResponseCode, error } from "../utils/response";
@@ -20,6 +20,7 @@ declare module 'hono' {
       device_number?: string;
       isAuth0User?: boolean;
     };
+    jwtPayload?: any;
   }
 }
 
@@ -88,10 +89,11 @@ export async function authJwtMiddleware(c: Context, next: Next) {
       return error(c, '请求中未包含有效的令牌', ResponseCode.UNAUTHORIZED, 401);
     }
     
-    // 手动验证并解析JWT
-    const payload = await JWT_CONFIG.SECRET ? 
-      (await import('hono/jwt')).verify(token, JWT_CONFIG.SECRET) : 
-      {};
+    // 使用verify函数验证JWT
+    let payload: any = {};
+    if (JWT_CONFIG.SECRET) {
+      payload = await verify(token, JWT_CONFIG.SECRET);
+    }
     
     // 将解析的载荷设置到上下文中
     c.set('jwtPayload', payload);
@@ -139,14 +141,16 @@ export async function userMiddleware(c: Context, next: Next) {
       
       if (account) {
         // 将Auth0用户信息注入到Context中
-        c.set('user', {
+        const userInfo = {
           id: account.id, // accounts表的ID
           email: account.email,
           auth0_sub: account.auth0_sub,
           device_number: account.device_number,
           isAuth0User: true,
           role: 'user' // 默认角色
-        });
+        };
+        
+        c.set('user', userInfo);
       } else {
         return error(c, 'Auth0账户不存在', ResponseCode.UNAUTHORIZED, 401);
       }
@@ -156,13 +160,15 @@ export async function userMiddleware(c: Context, next: Next) {
       
       if (user) {
         // 将用户信息注入到Context中
-        c.set('user', {
+        const userInfo = {
           id: user.id,
           username: user.username,
           role: 'user', // 默认角色为user
           email: user.email,
           isAuth0User: false
-        });
+        };
+        
+        c.set('user', userInfo);
       } else {
         return error(c, '用户不存在', ResponseCode.UNAUTHORIZED, 401);
       }
@@ -177,12 +183,31 @@ export async function userMiddleware(c: Context, next: Next) {
 }
 
 /**
- * 组合身份验证中间件（用于向后兼容）
+ * 组合身份验证中间件
+ * 正确处理异步操作的顺序执行
  */
 export async function authMiddleware(c: Context, next: Next) {
-  // 由于我们修改了JWT中间件的行为，可能无法简单组合
-  // 这里直接调用两个中间件依次处理
-  const result = await authJwtMiddleware(c, async () => {});
-  if (result) return result;
-  return userMiddleware(c, next);
+  // 如果路径在白名单中，跳过处理
+  if (isPathInWhitelist(c.req.path)) {
+    return next();
+  }
+  
+  // 先执行JWT验证中间件，但是不继续执行后续中间件
+  const jwtResult = await authJwtMiddleware(c, async () => {});
+  
+  // 如果JWT验证返回了结果，表示验证失败，直接返回错误
+  if (jwtResult) {
+    return jwtResult;
+  }
+  
+  // JWT验证成功，执行用户中间件，同样不继续执行后续中间件
+  const userResult = await userMiddleware(c, async () => {});
+  
+  // 如果用户中间件返回了结果，表示用户验证失败，直接返回错误
+  if (userResult) {
+    return userResult;
+  }
+  
+  // 所有中间件验证成功，继续执行后续中间件
+  return next();
 } 

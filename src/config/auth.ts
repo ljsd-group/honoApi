@@ -49,10 +49,13 @@ export const AUTH_WHITELIST = [
   '/openapi.json',
   '/api/health',
   '/api/doc',
+  
   // 静态资源不需要鉴权
   /^\/assets\//,
   /^\/public\//,
   
   // 可以使用正则表达式匹配路径
   /^\/api\/public\/.*/
+  
+  // 注意：/api/proxy/find-subscribe 不在白名单中，需要JWT认证
 ]; 

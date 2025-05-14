@@ -11,21 +11,6 @@ type Env = {
 // 创建代理端点
 const app = new OpenAPIHono<Env>()
 
-// 扩展类型定义，包含用户
-declare module "hono" {
-	interface ContextVariables {
-		user?: {
-			id: number
-			username?: string
-			role?: string
-			email?: string
-			auth0_sub?: string
-			device_number?: string
-			isAuth0User?: boolean
-		}
-	}
-}
-
 // 定义应用名称常量
 const APP_NAMES = {
 	ALGENIUS_NEXT: 'AlgeniusNext',
@@ -88,10 +73,6 @@ app.openapi(
 	},
 	async (c: Context<Env>) => {
 		try {
-			// 检查授权 - 测试中间件是否生效
-			const user = (c as any).get("user")
-			console.log("访问代理接口的用户信息:", user)
-
 			// 获取请求头
 			const deviceNumber = c.req.header("deviceNumber")
 			const phoneModel = c.req.header("phoneModel")
@@ -106,8 +87,6 @@ app.openapi(
 			const isProduction = ENV.NODE_ENV === 'production'
 			const appPaths = APP_API_PATHS[appName] || APP_API_PATHS[APP_NAMES.ALGENIUS_NEXT]
 			const apiUrl = isProduction ? appPaths.prod : appPaths.dev
-
-			console.log(`代理请求：应用=${appName}, 环境=${ENV.NODE_ENV}, 目标=${apiUrl}`)
 
 			// 构建请求URL（带查询参数）
 			const url = new URL(apiUrl)

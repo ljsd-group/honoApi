@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { errorHandler, logger, responseMiddleware } from "./middlewares";
-import { authJwtMiddleware, userMiddleware } from "./middlewares/authMiddleware";
+import { authMiddleware } from "./middlewares/authMiddleware";
 import { registerApiRoutes } from "./routes/api";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
@@ -40,11 +40,8 @@ app.use('*', cors(CORS_CONFIG));
 // 注册全局中间件
 app.use('*', logger);
 
-// 注册JWT身份验证中间件
-app.use('*', authJwtMiddleware);
-
-// 注册用户信息中间件
-app.use('*', userMiddleware);
+// 注册组合的身份验证中间件（同时处理JWT验证和用户信息）
+app.use('*', authMiddleware);
 
 // 注册响应格式化中间件
 app.use('*', responseMiddleware);
