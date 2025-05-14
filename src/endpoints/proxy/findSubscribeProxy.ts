@@ -26,6 +26,39 @@ declare module "hono" {
 	}
 }
 
+// 定义应用名称常量
+const APP_NAMES = {
+	ALGENIUS_NEXT: 'AlgeniusNext',
+	PICCHAT_BOX: 'PicchatBox',
+	TRADE_TUTOR_VIDEO: 'TradeTutorVideo',
+	AI_META_AID: 'AIMetaAid',
+	WALLET_BACKSTAGE: 'Wallet-Backstage'
+}
+
+// 定义应用对应的API路径
+const APP_API_PATHS = {
+	[APP_NAMES.ALGENIUS_NEXT]: {
+		dev: 'http://192.168.31.103:8080/adware/subscribe/find',
+		prod: 'https://ljsdstage.com/adware/subscribe/find'
+	},
+	[APP_NAMES.PICCHAT_BOX]: {
+		dev: 'http://192.168.31.103:8081/system/image/subscribe/find',
+		prod: 'https://ljsdstage.com/api/system/image/subscribe/find'
+	},
+	[APP_NAMES.TRADE_TUTOR_VIDEO]: {
+		dev: 'http://192.168.31.103:8083/system/image/subscribe/find',
+		prod: 'https://ljsdstage.com/video/system/image/subscribe/find'
+	},
+	[APP_NAMES.AI_META_AID]: {
+		dev: 'http://192.168.31.103:8084/system/image/subscribe/find',
+		prod: 'https://ljsdstage.com/aiMetaMid/system/image/subscribe/find'
+	},
+	[APP_NAMES.WALLET_BACKSTAGE]: {
+		dev: 'http://192.168.31.103:8085/system/image/subscribe/find',
+		prod: 'https://ljsdstage.com/wallet/system/image/subscribe/find'
+	}
+}
+
 app.openapi(
 	{
 		method: "get",
@@ -34,6 +67,7 @@ app.openapi(
 			query: z
 				.object({
 					receipt: z.string().optional(),
+					appName: z.string().optional()
 				})
 				.passthrough(),
 		},
@@ -50,7 +84,7 @@ app.openapi(
 		},
 		tags: ["代理服务"],
 		summary: "订阅查询代理",
-		description: "代理iOS客户端请求到第三方API的订阅查询接口",
+		description: "代理iOS客户端请求到第三方API的订阅查询接口，根据应用名称选择不同的代理路径",
 	},
 	async (c: Context<Env>) => {
 		try {
@@ -66,9 +100,14 @@ app.openapi(
 			// 获取查询参数
 			const queryParams = c.req.query()
 			const receipt = queryParams.receipt || ""
+			const appName = queryParams.appName || APP_NAMES.ALGENIUS_NEXT // 默认为AlgeniusNext
 
-			// 构建第三方API URL
-			const apiUrl = `${ENV.THIRD_PARTY_API}/adware/subscribe/find`
+			// 根据应用名称和环境选择API路径
+			const isProduction = ENV.NODE_ENV === 'production'
+			const appPaths = APP_API_PATHS[appName] || APP_API_PATHS[APP_NAMES.ALGENIUS_NEXT]
+			const apiUrl = isProduction ? appPaths.prod : appPaths.dev
+
+			console.log(`代理请求：应用=${appName}, 环境=${ENV.NODE_ENV}, 目标=${apiUrl}`)
 
 			// 构建请求URL（带查询参数）
 			const url = new URL(apiUrl)
