@@ -9,13 +9,13 @@
 		"deploy": "vite build && wrangler deploy",
 		"start": "vite dev",
 		"cf-typegen": "wrangler types",
-		"migrate": "node scripts/migrate.js",
-		"add-test-users": "npx tsx scripts/add-test-users.ts",
-		"init-db": "npx tsx scripts/init-database.ts",
-		"check-data": "npx tsx scripts/check-data.ts",
-		"migrate-accounts": "npx tsx scripts/migrate-accounts.ts",
-		"add-login-type": "npx tsx scripts/add-login-type.ts",
-		"migrate-device-accounts": "npx tsx scripts/migrate-device-accounts.ts"
+		"db:migrate": "npx tsx scripts/db-migrate.ts all",
+		"db:init": "npx tsx scripts/db-migrate.ts init",
+		"db:users": "npx tsx scripts/db-migrate.ts users",
+		"db:accounts": "npx tsx scripts/db-migrate.ts accounts",
+		"db:login-type": "npx tsx scripts/db-migrate.ts login-type",
+		"db:device-accounts": "npx tsx scripts/db-migrate.ts device-accounts",
+		"add-test-users": "npx tsx scripts/add-test-users.ts"
 	},
 	"dependencies": {
 		"@hono/swagger-ui": "^0.5.1",
