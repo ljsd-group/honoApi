@@ -206,10 +206,20 @@ app.openapi(
       try {
         const body = await c.req.json();
         console.log("解析的请求体:", body);
-        let { access_token, loginType = LOGIN_TYPE.APPLE } = body;
+        
+        // 确保loginType是数字类型
+        let { access_token, loginType } = body;
+        
+        // 如果没有提供loginType，使用默认值
+        if (loginType === undefined || loginType === null) {
+          loginType = LOGIN_TYPE.APPLE;
+        } else {
+          // 将loginType转换为数字
+          loginType = Number(loginType);
+        }
         
         // 检查loginType是否为有效的值
-        if (![LOGIN_TYPE.APPLE, LOGIN_TYPE.GOOGLE].includes(loginType)) {
+        if (loginType !== LOGIN_TYPE.APPLE && loginType !== LOGIN_TYPE.GOOGLE) {
           console.log(`收到非标准登录类型: ${loginType}`);
           return error(c, `不支持的登录类型：${loginType}，目前只支持1(Apple)和2(Google)`, ResponseCode.INTERNAL_ERROR, 200);
         }
