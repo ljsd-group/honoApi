@@ -35,6 +35,7 @@ if (typeof process !== 'undefined' && process.env) {
 function getEnvString(key: string, defaultValue: string = ''): string {
   // Node.js 环境
   if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    console.log("process.env[key]:", process.env[key]);
     return process.env[key] || defaultValue;
   }
   
@@ -110,9 +111,6 @@ export const ENV = {
   HOST: getEnvString('HOST', '0.0.0.0'),
   API_BASE_PATH: getEnvString('API_BASE_PATH', '/api'),
   
-  // 第三方API基础URL
-  THIRD_PARTY_API: getEnvString('THIRD_PARTY_API', 'http://192.168.100.13:8080'),
-  
   // 前端应用URL
   FRONTEND_URL: getEnvString('FRONTEND_URL', 
     currentEnv === 'production' 
@@ -150,7 +148,7 @@ export const ENV = {
   
   // JWT 配置
   JWT: {
-    SECRET: getEnvString('JWT_SECRET', 'your-secret-key-change-in-production'),
+    SECRET: getEnvString('JWT_SECRET', '3b97c48f7766afb388807f6c28f72342e0d9701c3ba73ef84efb8e50dd50b696c1b1e75894f4a3e0449b0c950669591788d04e5da38551f995b5c0ccf34864c9'),
     EXPIRES_IN: getEnvString('JWT_EXPIRES_IN', '24h'),
     ALGORITHM: getEnvString('JWT_ALGORITHM', 'HS256'),
   },
