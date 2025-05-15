@@ -10,13 +10,12 @@
 		"start": "vite dev",
 		"cf-typegen": "wrangler types",
 		"migrate": "node scripts/migrate.js",
-		"seed": "npx tsx scripts/seed.ts",
 		"add-test-users": "npx tsx scripts/add-test-users.ts",
-		"add-tasks": "npx tsx scripts/add-tasks.ts",
 		"init-db": "npx tsx scripts/init-database.ts",
 		"check-data": "npx tsx scripts/check-data.ts",
 		"migrate-accounts": "npx tsx scripts/migrate-accounts.ts",
-		"add-login-type": "npx tsx scripts/add-login-type.ts"
+		"add-login-type": "npx tsx scripts/add-login-type.ts",
+		"migrate-device-accounts": "npx tsx scripts/migrate-device-accounts.ts"
 	},
 	"dependencies": {
 		"@hono/swagger-ui": "^0.5.1",

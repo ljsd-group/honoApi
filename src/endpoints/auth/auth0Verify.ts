@@ -4,6 +4,7 @@ import { success, error, ResponseCode } from "../../utils/response";
 import { AUTH0_CONFIG, JWT_CONFIG } from "../../config/auth";
 import { Context } from "hono";
 import { AccountService } from "../../services/accountService";
+import { DeviceService } from "../../services/deviceService";
 import { sign } from "hono/jwt";
 
 // 环境类型定义
@@ -31,6 +32,7 @@ const LOGIN_TYPE = {
 // 创建 Auth0 Token 验证端点
 const app = new OpenAPIHono<Env>();
 const accountService = new AccountService();
+const deviceService = new DeviceService();
 
 // 定义请求验证模式
 const auth0VerifySchema = z.object({
@@ -207,8 +209,13 @@ app.openapi(
         const body = await c.req.json();
         console.log("解析的请求体:", body);
         const { access_token, loginType = LOGIN_TYPE.APPLE } = body;
-        // 从请求头获取设备号
+        
+        // 从请求头获取设备相关信息
         const device_number = c.req.header("deviceNumber");
+        const phone_model = c.req.header("phoneModel");
+        const country_code = c.req.header("countryCode");
+        const version = c.req.header("version");
+        
         console.log("device_number:", device_number);
         
         if (!access_token) {
@@ -226,87 +233,54 @@ app.openapi(
         }
 
         const userInfo = await userInfoResponse.json() as Auth0UserInfo;
-        let account;
         
-        // 先检查是否有传入device_number
-        if (device_number) {
-          // 通过device_number和auth0_sub查找账户
-          const existingAccount = await accountService.findAccountByDeviceAndAuth0Sub(device_number, userInfo.sub);
-          
-          if (existingAccount) {
-            // 如果找到现有账户，则更新信息（设备和账户组合已存在）
-            console.log('找到已存在的设备号和Auth0账户组合，更新账户信息');
-            account = await accountService.updateAccount({
-              ...existingAccount,
-              name: userInfo.name,
-              nickname: userInfo.nickname,
-              email: userInfo.email,
-              email_verified: userInfo.email_verified,
-              picture: userInfo.picture,
-              loginType: loginType // 保存登录类型
-            });
-          } else {
-            // 如果没找到匹配的设备号和Auth0账户组合，创建新账户
-            // 这支持一个账号登录多个设备，一个设备登录多个账号
-            console.log('设备号和Auth0账户组合不存在，创建新账户');
-            try {
-              account = await accountService.createAccount({
-                auth0_sub: userInfo.sub,
-                name: userInfo.name,
-                nickname: userInfo.nickname,
-                email: userInfo.email,
-                email_verified: userInfo.email_verified,
-                picture: userInfo.picture,
-                device_number: device_number,
-                loginType: loginType // 保存登录类型
-              });
-            } catch (dbErr) {
-              // 如果创建失败（可能是由于数据库约束），尝试查找该auth0_sub账户
-              console.error('创建账户失败，尝试查找现有auth0账户:', dbErr);
-              const existingAuth0Account = await accountService.findAccountByAuth0Sub(userInfo.sub);
-              
-              if (existingAuth0Account) {
-                // 创建一个新的账户记录，关联相同的auth0_sub但不同的device_number
-                console.log('找到现有auth0账户，但device_number不同，创建新关联');
-                
-                // 在这里应该有一种方式创建设备和账户的关联
-                // 由于目前的数据库结构似乎不支持多对多关系，暂时返回现有账户信息
-                account = existingAuth0Account;
-              } else {
-                // 如果真的找不到任何相关账户，则抛出错误
-                throw new Error('无法创建或找到账户');
-              }
-            }
-          }
+        // 先查找或创建Auth0账户
+        let account = await accountService.findAccountByAuth0Sub(userInfo.sub);
+        
+        if (!account) {
+          // 如果账户不存在，创建新账户
+          console.log('未找到Auth0账户，创建新账户');
+          account = await accountService.createAccount({
+            auth0_sub: userInfo.sub,
+            name: userInfo.name,
+            nickname: userInfo.nickname,
+            email: userInfo.email,
+            email_verified: userInfo.email_verified,
+            picture: userInfo.picture,
+            loginType: loginType
+          });
         } else {
-          // 如果没有传入device_number，则通过auth0_sub查找账户
-          console.log('未提供设备号，通过Auth0 ID查找账户');
-          const existingAccount = await accountService.findAccountByAuth0Sub(userInfo.sub);
-          
-          if (existingAccount) {
-            // 更新账户信息，但不更改设备号
-            console.log('找到已存在的Auth0账户，更新账户信息（不包含设备号）');
-            account = await accountService.updateAccount({
-              ...existingAccount,
-              name: userInfo.name,
-              nickname: userInfo.nickname,
-              email: userInfo.email,
-              email_verified: userInfo.email_verified,
-              picture: userInfo.picture,
-              loginType: loginType // 保存登录类型
-            });
-          } else {
-            // 创建没有设备号的新账户
-            console.log('未找到Auth0账户，创建新账户（无设备号）');
-            account = await accountService.createAccount({
+          // 如果账户已存在，更新账户信息
+          console.log('找到已存在的Auth0账户，更新账户信息');
+          if (account && account.id) {
+            const updatedAccount = await accountService.updateAccount({
+              id: account.id,
               auth0_sub: userInfo.sub,
               name: userInfo.name,
               nickname: userInfo.nickname,
               email: userInfo.email,
               email_verified: userInfo.email_verified,
               picture: userInfo.picture,
-              loginType: loginType // 保存登录类型
+              loginType: loginType
             });
+            // 使用类型断言解决类型问题
+            account = updatedAccount as any;
+          }
+        }
+        
+        // 如果有设备号，处理设备关联
+        if (device_number) {
+          // 查找或创建设备
+          const device = await deviceService.findOrCreateDevice(
+            device_number,
+            phone_model,
+            country_code,
+            version
+          );
+          
+          if (device && account && account.id && device.id) {
+            await deviceService.linkDeviceToAccount(device.id, account.id);
+            console.log(`已关联设备 ${device_number} 到账户 ${account.id}`);
           }
         }
 
@@ -316,18 +290,23 @@ app.openapi(
           auth0_sub: userInfo.sub, // 保存Auth0的sub以便后续关联
           name: userInfo.name || '',
           email: userInfo.email || '',
-          device_number: account.device_number || '',
+          device_number: device_number || '', // 保留设备号在token中
           loginType: loginType, // 包含登录类型
-          exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24小时后过期
+          exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60 *30, // 30天后过期
         }, JWT_CONFIG.SECRET || 'default_secret');
 
         // 处理账户中的null值，替换为空字符串
         const processedAccount = replaceNullWithEmptyString(account);
+        
+        // 查询关联的设备列表（可选）
+        // const devicesList = device_number ? 
+        //   await deviceService.findDevicesByAccountId(account.id!) : [];
 
         // 返回用户信息、账户信息和JWT令牌
         return success(c, {
-          token, // 新增JWT令牌
+          token, // JWT令牌
           account: processedAccount
+          // devices: devicesList // 可选：返回关联的设备列表
         }, "令牌验证成功");
       } catch (jsonErr) {
         console.error("解析请求体失败:", jsonErr);

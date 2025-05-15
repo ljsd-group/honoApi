@@ -105,12 +105,8 @@ export class AccountService {
   }
   
   // 更新账户
-  async updateAccount(accountData: Account) {
+  async updateAccount(accountData: Omit<Account, 'id'> & { id: number }) {
     try {
-      if (!accountData.id) {
-        throw new Error('更新账户需要提供账户ID');
-      }
-      
       await db.update(accounts)
         .set({
           auth0_sub: accountData.auth0_sub,
