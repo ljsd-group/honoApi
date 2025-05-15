@@ -56,9 +56,19 @@ app.get('/.well-known/apple-app-site-association', (c) => {
 registerApiRoutes(app);
 
 // 添加API文档UI到根路径
-app.get('/', (c) => {
-  // 返回 Swagger UI 界面
-  return c.html(`
+app.get('/', async (c) => {
+  try {
+    // 获取OpenAPI规范
+    const response = await fetch(`http://localhost:8080/api/doc`);
+    if (!response.ok) {
+      return c.text('无法加载API文档', 500);
+    }
+    
+    const data = await response.json() as { code: number, data: any, message: string };
+    const apiSpec = data.data; // 获取返回的data字段中的规范内容
+    
+    // 返回 Swagger UI 界面
+    return c.html(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,27 +76,38 @@ app.get('/', (c) => {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="SwaggerUI" />
   <title>API Documentation</title>
-  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@latest/swagger-ui.css" />
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.1.0/swagger-ui.css" />
 </head>
 <body>
   <div id="swagger-ui"></div>
-  <script src="https://unpkg.com/swagger-ui-dist@latest/swagger-ui-bundle.js" crossorigin></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.1.0/swagger-ui-bundle.js" crossorigin></script>
   <script>
     window.onload = () => {
-      window.ui = SwaggerUIBundle({
-        url: '/api/doc',
+      const ui = SwaggerUIBundle({
+        spec: ${JSON.stringify(apiSpec)},
         dom_id: '#swagger-ui',
+        deepLinking: true,
+        validatorUrl: null,
+        defaultModelsExpandDepth: -1,
+        presets: [
+          SwaggerUIBundle.presets.apis
+        ],
+        layout: "BaseLayout"
       });
     };
   </script>
 </body>
 </html>
-  `);
+    `);
+  } catch (error) {
+    console.error('加载API文档出错:', error);
+    return c.text('加载API文档时出错', 500);
+  }
 });
 
 // 提供自动生成的OpenAPI规范文档
 app.doc('/api/doc', {
-  openapi: '3.0.0',
+  openapi: '3.1.0',
   info: {
     title: 'Hono 任务管理 API',
     version: '1.0.0',
