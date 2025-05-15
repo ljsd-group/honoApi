@@ -8,38 +8,45 @@ import { ResponseCode } from '../utils/response';
  * 失败: { code: 错误码, message: '错误消息' }
  */
 export async function responseMiddleware(c: Context, next: Next) {
-  // 保存原始json方法
-  const originalJson = c.json;
+  // 保留原始方法
+  const originalJson = c.json.bind(c);
   
-  // 替换json方法以修改返回格式
-  c.json = function(data: any, status?: number) {
-    const responseStatus = status || 200;
-    
+  // 重写json方法
+  c.json = (data: any, init?: any) => {
     // 检查是否已经是标准格式
     if (data && typeof data === 'object' && 'code' in data) {
-      return originalJson.call(c, data, responseStatus);
+      return originalJson(data, init);
     }
     
+    // 获取状态码
+    const status = typeof init === 'number' 
+      ? init 
+      : (init && typeof init === 'object' && 'status' in init) 
+        ? init.status 
+        : 200;
+    
     // 根据状态码判断是成功还是失败
-    if (responseStatus >= 200 && responseStatus < 300) {
+    if (status >= 200 && status < 300) {
       // 成功响应
-      return originalJson.call(c, {
+      return originalJson({
         code: ResponseCode.SUCCESS,
         data: data,
         message: '请求成功'
-      }, responseStatus);
+      }, init);
     } else {
       // 错误响应
-      const errorBody = typeof data === 'object' ? data : {};
+      const errorBody = data && typeof data === 'object' ? data : {};
       const message = 
-        typeof errorBody.error === 'string' ? errorBody.error : 
-        typeof errorBody.message === 'string' ? errorBody.message : 
-        '请求失败';
+        (errorBody && 'error' in errorBody && typeof errorBody.error === 'string') 
+          ? errorBody.error 
+          : (errorBody && 'message' in errorBody && typeof errorBody.message === 'string') 
+            ? errorBody.message 
+            : '请求失败';
       
       let code = ResponseCode.INTERNAL_ERROR;
       
       // 根据HTTP状态码选择适当的错误码
-      switch(responseStatus) {
+      switch(status) {
         case 400: code = ResponseCode.BAD_REQUEST; break;
         case 401: code = ResponseCode.UNAUTHORIZED; break;
         case 403: code = ResponseCode.FORBIDDEN; break;
@@ -47,13 +54,12 @@ export async function responseMiddleware(c: Context, next: Next) {
         default: code = ResponseCode.INTERNAL_ERROR;
       }
       
-      return originalJson.call(c, {
+      return originalJson({
         code: code,
         message: message
-      }, responseStatus);
+      }, init);
     }
   };
   
-  // 执行后续中间件
   await next();
 } 

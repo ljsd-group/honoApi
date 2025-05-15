@@ -26,7 +26,7 @@ interface Auth0UserInfo {
 // 登录类型枚举
 const LOGIN_TYPE = {
   APPLE: 1,   // 苹果登录
-  GOOGLE: 2   // 谷歌登录
+  GOOGLE: 2,  // 谷歌登录
 };
 
 // 创建 Auth0 Token 验证端点
@@ -40,9 +40,7 @@ const auth0VerifySchema = z.object({
   loginType: z.union([
     z.number(),
     z.string().transform(val => Number(val))
-  ]).refine(val => val === LOGIN_TYPE.APPLE || val === LOGIN_TYPE.GOOGLE, {
-    message: "登录类型必须是1(Apple)或2(Google)"
-  }).default(LOGIN_TYPE.APPLE)
+  ]).default(LOGIN_TYPE.APPLE)
 });
 
 // 定义响应类型
@@ -208,7 +206,13 @@ app.openapi(
       try {
         const body = await c.req.json();
         console.log("解析的请求体:", body);
-        const { access_token, loginType = LOGIN_TYPE.APPLE } = body;
+        let { access_token, loginType = LOGIN_TYPE.APPLE } = body;
+        
+        // 检查loginType是否为有效的值
+        if (![LOGIN_TYPE.APPLE, LOGIN_TYPE.GOOGLE].includes(loginType)) {
+          console.log(`收到非标准登录类型: ${loginType}`);
+          return error(c, `不支持的登录类型：${loginType}，目前只支持1(Apple)和2(Google)`, ResponseCode.INTERNAL_ERROR, 200);
+        }
         
         // 从请求头获取设备相关信息
         const device_number = c.req.header("deviceNumber");
@@ -228,8 +232,9 @@ app.openapi(
         });
 
         if (!userInfoResponse.ok) {
-          console.error("无效的访问令牌");
-          return error(c, "无效的访问令牌", ResponseCode.UNAUTHORIZED, 401);
+          const errorText = await userInfoResponse.text().catch(() => '未知错误');
+          console.error("无效的访问令牌:", errorText);
+          return error(c, `无效的访问令牌: ${errorText}`, ResponseCode.UNAUTHORIZED, 401);
         }
 
         const userInfo = await userInfoResponse.json() as Auth0UserInfo;
