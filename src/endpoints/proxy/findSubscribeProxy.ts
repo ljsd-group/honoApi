@@ -51,7 +51,6 @@ app.openapi(
 		request: {
 			query: z
 				.object({
-					receipt: z.string().optional(),
 					appName: z.string().optional()
 				})
 				.passthrough(),
@@ -80,7 +79,6 @@ app.openapi(
 
 			// 获取查询参数
 			const queryParams = c.req.query()
-			const receipt = queryParams.receipt || ""
 			const appName = queryParams.appName || APP_NAMES.ALGENIUS_NEXT // 默认为AlgeniusNext
 
 			// 根据应用名称和环境选择API路径
@@ -88,11 +86,8 @@ app.openapi(
 			const appPaths = APP_API_PATHS[appName] || APP_API_PATHS[APP_NAMES.ALGENIUS_NEXT]
 			const apiUrl = isProduction ? appPaths.prod : appPaths.dev
 
-			// 构建请求URL（带查询参数）
+			// 构建请求URL
 			const url = new URL(apiUrl)
-			if (receipt) {
-				url.searchParams.append("receipt", receipt)
-			}
 
 			// 转发请求到第三方API
 			const response = await fetch(url.toString(), {
