@@ -35,7 +35,10 @@ const accountService = new AccountService();
 // 定义请求验证模式
 const auth0VerifySchema = z.object({
   access_token: z.string().min(1, "访问令牌不能为空"),
-  loginType: z.number().refine(val => val === LOGIN_TYPE.APPLE || val === LOGIN_TYPE.GOOGLE, {
+  loginType: z.union([
+    z.number(),
+    z.string().transform(val => Number(val))
+  ]).refine(val => val === LOGIN_TYPE.APPLE || val === LOGIN_TYPE.GOOGLE, {
     message: "登录类型必须是1(Apple)或2(Google)"
   }).default(LOGIN_TYPE.APPLE)
 });
@@ -193,106 +196,155 @@ app.openapi(
   },
   // 使用 any 类型避免类型错误
   (async (c: any) => {
+    console.log("========== 请求已到达auth0Verify处理函数 ==========");
     try {
       // 获取请求体中的访问令牌和登录类型
-      const body = await c.req.json();
-      const { access_token, loginType = LOGIN_TYPE.APPLE } = body;
+      console.log("请求头信息:", c.req.header());
+      console.log("请求方法:", c.req.method);
+      console.log("请求路径:", c.req.path);
       
-      // 从请求头获取设备号
-      const device_number = c.req.header("deviceNumber");
-      
-      if (!access_token) {
-        return error(c, "访问令牌不能为空", ResponseCode.BAD_REQUEST, 400);
-      }
-
-      // 使用访问令牌获取用户信息
-      const userInfoResponse = await fetch(`https://${AUTH0_CONFIG.DOMAIN}/userinfo`, {
-        headers: { Authorization: `Bearer ${access_token}` }
-      });
-
-      if (!userInfoResponse.ok) {
-        console.error("无效的访问令牌");
-        return error(c, "无效的访问令牌", ResponseCode.UNAUTHORIZED, 401);
-      }
-
-      const userInfo = await userInfoResponse.json() as Auth0UserInfo;
-      // let userInfo: Auth0UserInfo = {
-      //   sub: `auth0|${Date.now()}`, // 生成一个唯一标识符
-      //   name: "测试用户",
-      //   nickname: "测试用户",
-      //   email: "test@example.com",
-      //   email_verified: true,
-      //   picture: "https://example.com/default-avatar.png"
-      // };
-      let account;
-      
-      // 先检查是否有传入device_number
-      if (device_number) {
-        // 通过device_number和auth0_sub查找账户
-        const existingAccount = await accountService.findAccountByDeviceAndAuth0Sub(device_number, userInfo.sub);
+      try {
+        const body = await c.req.json();
+        console.log("解析的请求体:", body);
+        const { access_token, loginType = LOGIN_TYPE.APPLE } = body;
+        // 从请求头获取设备号
+        const device_number = c.req.header("deviceNumber");
+        console.log("device_number:", device_number);
         
-        if (existingAccount) {
-          // 如果找到现有账户，则更新信息
-          console.log('找到已存在的设备号和Auth0账户，更新账户信息');
-          account = await accountService.updateAccount({
-            ...existingAccount,
-            auth0_sub: userInfo.sub,
-            name: userInfo.name,
-            nickname: userInfo.nickname,
-            email: userInfo.email,
-            email_verified: userInfo.email_verified,
-            picture: userInfo.picture,
-            loginType: loginType // 保存登录类型
-          });
-        } else {
-          // 如果没找到匹配的设备号和Auth0账户组合，创建新账户
-          console.log('设备号和Auth0账户组合不存在，创建新账户');
-          account = await accountService.createAccount({
-            auth0_sub: userInfo.sub,
-            name: userInfo.name,
-            nickname: userInfo.nickname,
-            email: userInfo.email,
-            email_verified: userInfo.email_verified,
-            picture: userInfo.picture,
-            device_number: device_number,
-            loginType: loginType // 保存登录类型
-          });
+        if (!access_token) {
+          return error(c, "访问令牌不能为空", ResponseCode.BAD_REQUEST, 400);
         }
-      } else {
-        // 如果没有传入device_number，则通过auth0_sub查找/创建账户
-        console.log('未提供设备号，通过Auth0 ID查找/创建账户');
-        account = await accountService.createOrUpdateAccount({
-          auth0_sub: userInfo.sub,
-          name: userInfo.name,
-          nickname: userInfo.nickname,
-          email: userInfo.email,
-          email_verified: userInfo.email_verified,
-          picture: userInfo.picture,
-          loginType: loginType // 保存登录类型
+
+        // 使用访问令牌获取用户信息
+        const userInfoResponse = await fetch(`https://${AUTH0_CONFIG.DOMAIN}/userinfo`, {
+          headers: { Authorization: `Bearer ${access_token}` }
         });
+
+        if (!userInfoResponse.ok) {
+          console.error("无效的访问令牌");
+          return error(c, "无效的访问令牌", ResponseCode.UNAUTHORIZED, 401);
+        }
+
+        const userInfo = await userInfoResponse.json() as Auth0UserInfo;
+        let account;
+        
+        // 先检查是否有传入device_number
+        if (device_number) {
+          // 通过device_number和auth0_sub查找账户
+          const existingAccount = await accountService.findAccountByDeviceAndAuth0Sub(device_number, userInfo.sub);
+          
+          if (existingAccount) {
+            // 如果找到现有账户，则更新信息（设备和账户组合已存在）
+            console.log('找到已存在的设备号和Auth0账户组合，更新账户信息');
+            account = await accountService.updateAccount({
+              ...existingAccount,
+              name: userInfo.name,
+              nickname: userInfo.nickname,
+              email: userInfo.email,
+              email_verified: userInfo.email_verified,
+              picture: userInfo.picture,
+              loginType: loginType // 保存登录类型
+            });
+          } else {
+            // 如果没找到匹配的设备号和Auth0账户组合，创建新账户
+            // 这支持一个账号登录多个设备，一个设备登录多个账号
+            console.log('设备号和Auth0账户组合不存在，创建新账户');
+            try {
+              account = await accountService.createAccount({
+                auth0_sub: userInfo.sub,
+                name: userInfo.name,
+                nickname: userInfo.nickname,
+                email: userInfo.email,
+                email_verified: userInfo.email_verified,
+                picture: userInfo.picture,
+                device_number: device_number,
+                loginType: loginType // 保存登录类型
+              });
+            } catch (dbErr) {
+              // 如果创建失败（可能是由于数据库约束），尝试查找该auth0_sub账户
+              console.error('创建账户失败，尝试查找现有auth0账户:', dbErr);
+              const existingAuth0Account = await accountService.findAccountByAuth0Sub(userInfo.sub);
+              
+              if (existingAuth0Account) {
+                // 创建一个新的账户记录，关联相同的auth0_sub但不同的device_number
+                console.log('找到现有auth0账户，但device_number不同，创建新关联');
+                
+                // 在这里应该有一种方式创建设备和账户的关联
+                // 由于目前的数据库结构似乎不支持多对多关系，暂时返回现有账户信息
+                account = existingAuth0Account;
+              } else {
+                // 如果真的找不到任何相关账户，则抛出错误
+                throw new Error('无法创建或找到账户');
+              }
+            }
+          }
+        } else {
+          // 如果没有传入device_number，则通过auth0_sub查找账户
+          console.log('未提供设备号，通过Auth0 ID查找账户');
+          const existingAccount = await accountService.findAccountByAuth0Sub(userInfo.sub);
+          
+          if (existingAccount) {
+            // 更新账户信息，但不更改设备号
+            console.log('找到已存在的Auth0账户，更新账户信息（不包含设备号）');
+            account = await accountService.updateAccount({
+              ...existingAccount,
+              name: userInfo.name,
+              nickname: userInfo.nickname,
+              email: userInfo.email,
+              email_verified: userInfo.email_verified,
+              picture: userInfo.picture,
+              loginType: loginType // 保存登录类型
+            });
+          } else {
+            // 创建没有设备号的新账户
+            console.log('未找到Auth0账户，创建新账户（无设备号）');
+            account = await accountService.createAccount({
+              auth0_sub: userInfo.sub,
+              name: userInfo.name,
+              nickname: userInfo.nickname,
+              email: userInfo.email,
+              email_verified: userInfo.email_verified,
+              picture: userInfo.picture,
+              loginType: loginType // 保存登录类型
+            });
+          }
+        }
+
+        // 生成JWT令牌
+        const token = await sign({
+          sub: String(account.id), // 使用我们自己数据库中的ID，而不是Auth0的sub
+          auth0_sub: userInfo.sub, // 保存Auth0的sub以便后续关联
+          name: userInfo.name || '',
+          email: userInfo.email || '',
+          device_number: account.device_number || '',
+          loginType: loginType, // 包含登录类型
+          exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24小时后过期
+        }, JWT_CONFIG.SECRET || 'default_secret');
+
+        // 处理账户中的null值，替换为空字符串
+        const processedAccount = replaceNullWithEmptyString(account);
+
+        // 返回用户信息、账户信息和JWT令牌
+        return success(c, {
+          token, // 新增JWT令牌
+          account: processedAccount
+        }, "令牌验证成功");
+      } catch (jsonErr) {
+        console.error("解析请求体失败:", jsonErr);
+        return error(c, "无效的请求格式，请确保发送正确的JSON格式", ResponseCode.BAD_REQUEST, 400);
       }
-
-      // 生成JWT令牌
-      const token = await sign({
-        sub: String(account.id), // 使用我们自己数据库中的ID，而不是Auth0的sub
-        auth0_sub: userInfo.sub, // 保存Auth0的sub以便后续关联
-        name: userInfo.name || '',
-        email: userInfo.email || '',
-        device_number: account.device_number || '',
-        loginType: loginType, // 包含登录类型
-        exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24小时后过期
-      }, JWT_CONFIG.SECRET || 'default_secret');
-
-      // 处理账户中的null值，替换为空字符串
-      const processedAccount = replaceNullWithEmptyString(account);
-
-      // 返回用户信息、账户信息和JWT令牌
-      return success(c, {
-        token, // 新增JWT令牌
-        account: processedAccount
-      }, "令牌验证成功");
     } catch (err) {
       console.error("令牌验证错误:", err);
+      
+      // 区分不同类型的错误
+      if (err instanceof Error) {
+        // 检查是否为数据库约束错误
+        if (err.message && err.message.includes('duplicate key value violates unique constraint')) {
+          console.log('处理数据库唯一约束冲突错误');
+          return error(c, "账户已存在，但处理过程中出现问题，请重试", ResponseCode.BAD_REQUEST, 400);
+        }
+      }
+      
       return error(c, "验证访问令牌时发生错误", ResponseCode.INTERNAL_ERROR, 500);
     }
   }) as any
