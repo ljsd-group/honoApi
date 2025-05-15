@@ -6,10 +6,8 @@ import { ENV } from './env';
 export const JWT_CONFIG = {
   // JWT密钥（从环境变量中获取）
   SECRET: ENV.JWT.SECRET,
-  
   // 过期时间
   EXPIRES_IN: ENV.JWT.EXPIRES_IN,
-  
   // JWT算法
   ALGORITHM: ENV.JWT.ALGORITHM
 };
@@ -20,17 +18,26 @@ export const JWT_CONFIG = {
 export const AUTH0_CONFIG = {
   // Auth0 域名
   DOMAIN: ENV.AUTH0.DOMAIN,
-  
   // 客户端ID
   CLIENT_ID: ENV.AUTH0.CLIENT_ID,
-  
   // 客户端密钥
   CLIENT_SECRET: ENV.AUTH0.CLIENT_SECRET,
-  
   // 回调URL
   REDIRECT_URI: ENV.AUTH0.REDIRECT_URI
 };
 
+/**
+ * 数据库配置
+ */
+export const DATABASE_CONFIG = {
+  HOST: ENV.DATABASE.HOST,
+  PORT: ENV.DATABASE.PORT,
+  USER: ENV.DATABASE.USER,
+  PASSWORD: ENV.DATABASE.PASSWORD,
+  NAME: ENV.DATABASE.NAME,
+  MAX_CONNECTIONS: ENV.DATABASE.MAX_CONNECTIONS,
+  IDLE_TIMEOUT: ENV.DATABASE.IDLE_TIMEOUT
+}
 /**
  * 路由白名单配置
  * 白名单中的路由不需要JWT鉴权

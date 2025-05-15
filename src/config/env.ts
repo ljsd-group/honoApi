@@ -145,7 +145,16 @@ export const ENV = {
     CLIENT_SECRET: getEnvString('AUTH0_CLIENT_SECRET', 'your-client-secret'),
     REDIRECT_URI: getEnvString('AUTH0_REDIRECT_URI', 'http://localhost:3000/api/auth/callback'),
   },
-  
+  // 数据库配置
+  DATABASE: {
+    HOST: getEnvString('DB_HOST', 'localhost'),
+    PORT: getEnvNumber('DB_PORT', 5432),
+    USER: getEnvString('DB_USER', 'pguser'),
+    PASSWORD: getEnvString('DB_PASSWORD', '123456'),
+    NAME: getEnvString('DB_NAME', 'honostudy'),
+    MAX_CONNECTIONS: getEnvNumber('DB_MAX_CONNECTIONS', 10),
+    IDLE_TIMEOUT: getEnvNumber('DB_IDLE_TIMEOUT', 30000)
+  },
   // JWT 配置
   JWT: {
     SECRET: getEnvString('JWT_SECRET', '3b97c48f7766afb388807f6c28f72342e0d9701c3ba73ef84efb8e50dd50b696c1b1e75894f4a3e0449b0c950669591788d04e5da38551f995b5c0ccf34864c9'),

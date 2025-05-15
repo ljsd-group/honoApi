@@ -1,15 +1,15 @@
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-
+import { DATABASE_CONFIG } from './auth';
 // PostgreSQL连接配置
 const poolOptions = {
-  host: 'localhost',
-  port: 5432,
-  user: 'pguser',
-  password: '123456',
-  database: 'honostudy', // 默认数据库名，如需修改请调整
-  max: 10, // 最大连接数
-  idleTimeoutMillis: 30000 // 空闲连接超时时间
+  host: DATABASE_CONFIG.HOST,
+  port: DATABASE_CONFIG.PORT,
+  user: DATABASE_CONFIG.USER,
+  password: DATABASE_CONFIG.PASSWORD,
+  database: DATABASE_CONFIG.NAME, // 默认数据库名，如需修改请调整
+  max: DATABASE_CONFIG.MAX_CONNECTIONS, // 最大连接数
+  idleTimeoutMillis: DATABASE_CONFIG.IDLE_TIMEOUT // 空闲连接超时时间
 };
 
 // 创建连接池

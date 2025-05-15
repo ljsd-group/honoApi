@@ -1,14 +1,15 @@
 import { Pool } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
+import { DATABASE_CONFIG } from '../src/config/auth';
 
 // 数据库连接配置
 const DB_CONFIG = {
-  host: 'localhost',
-  port: 5432,
-  user: 'pguser',
-  password: '123456',
-  database: 'honostudy'
+  host: DATABASE_CONFIG.HOST,
+  port: DATABASE_CONFIG.PORT,
+  user: DATABASE_CONFIG.USER,
+  password: DATABASE_CONFIG.PASSWORD,
+  database: DATABASE_CONFIG.NAME
 };
 
 // PostgreSQL 默认数据库连接配置

@@ -42,7 +42,14 @@
 		"PORT": "3000",
 		"HOST": "0.0.0.0",
 		"FRONTEND_URL": "http://192.168.31.177:8080",
-		"CORS_ORIGINS": "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:3000,http://192.168.31.177:8080"
+		"CORS_ORIGINS": "http://192.168.31.177:8080",
+		"DB_HOST": "localhost",
+		"DB_PORT": "5432",
+		"DB_USER": "pguser",
+		"DB_PASSWORD": "123456",
+		"DB_NAME": "honostudy",
+		"DB_MAX_CONNECTIONS": "10",
+		"DB_IDLE_TIMEOUT": "30000"
 	},
 	/**
 	 * Note: Use secrets to store sensitive data.
