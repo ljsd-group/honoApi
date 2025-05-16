@@ -51,7 +51,7 @@ const APP_API_PATHS = {
 
 app.openapi(
 	{
-		method: "post",
+		method: "get",
 		path: "/",
 		request: {
 			query: z
@@ -123,7 +123,11 @@ app.openapi(
 
 			// 获取响应数据
 			const responseData = await response.json() as Record<string, any>;
-
+			console.log("代理请求成功:", responseData)
+			const responMessage = {
+				code: responseData.code,
+				message: responseData.msg,
+			}
 			// 如果代理请求成功，解除设备与账户的关联
 			if (response.ok) {
 				try {
@@ -131,21 +135,16 @@ app.openapi(
 					console.log(`使用auth0_sub=${user.auth0_sub}解除设备=${deviceNumber}的关联`);
 					const unbindResult = await accountService.unBindDeviceByAuth0Sub(user.auth0_sub, deviceNumber);
 					console.log('解除设备关联结果:', unbindResult);
-					
-					// 将解绑结果添加到响应中
-					responseData.unbindResult = unbindResult;
 				} catch (dbError) {
 					console.error(`解除设备关联失败:`, dbError);
 					// 数据库操作失败不影响API响应，但记录错误信息
-					responseData.unbindError = "解除设备关联时发生错误";
 				}
 			}
 
 			// 获取状态码
 			const statusCode = response.status >= 200 && response.status < 600 ? (response.status as 200 | 400 | 500) : 500
-
 			// 创建新的响应对象
-			return c.json(responseData, statusCode)
+			return c.json(responMessage, statusCode)
 		} catch (err) {
 			console.error("代理请求失败:", err)
 			// 确保只返回一次响应

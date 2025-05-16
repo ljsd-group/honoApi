@@ -36,7 +36,7 @@ const deviceService = new DeviceService();
 
 // 定义请求验证模式
 const auth0VerifySchema = z.object({
-  access_token: z.string().min(1, "访问令牌不能为空"),
+  access_token: z.string(),
   loginType: z.union([
     z.number(),
     z.string().transform(val => Number(val))
@@ -237,7 +237,7 @@ app.openapi(
         console.log("device_number:", device_number);
         
         if (!access_token) {
-          return error(c, "访问令牌不能为空", ResponseCode.BAD_REQUEST, 400);
+          return error(c, "访问令牌不能为空", ResponseCode.INTERNAL_ERROR, 200);
         }
 
         // 使用访问令牌获取用户信息
@@ -248,7 +248,7 @@ app.openapi(
         if (!userInfoResponse.ok) {
           const errorText = await userInfoResponse.text().catch(() => '未知错误');
           console.error("无效的访问令牌:", errorText);
-          return error(c, `无效的访问令牌: ${errorText}`, ResponseCode.UNAUTHORIZED, 401);
+          return error(c, `无效的访问令牌: ${errorText}`, ResponseCode.INTERNAL_ERROR, 200);
         }
 
         const userInfo = await userInfoResponse.json() as Auth0UserInfo;
