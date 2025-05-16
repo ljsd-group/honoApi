@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import findSubscribeProxyApp from "../endpoints/proxy/findSubscribeProxy";
 import logoffProxyApp from "../endpoints/proxy/logoffProxy";
+import comProxyApiApp from "../endpoints/proxy/comProxyApi";
 
 // 定义环境类型
 type Env = {
@@ -16,6 +17,9 @@ proxyRouter.route('/find-subscribe', findSubscribeProxyApp);
 
 // 挂载退出登录代理端点
 proxyRouter.route('/logoff', logoffProxyApp);
+
+// 挂载通用代理端点
+proxyRouter.route('/common', comProxyApiApp);
 
 /**
  * 注册代理相关路由
