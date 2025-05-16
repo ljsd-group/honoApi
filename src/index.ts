@@ -1,9 +1,8 @@
-import { Hono } from "hono";
+
 import { errorHandler, logger, responseMiddleware, requestMonitor } from "./middlewares";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { registerApiRoutes } from "./routes/api";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { swaggerUI } from "@hono/swagger-ui";
 import { cors } from 'hono/cors';
 import { CORS_CONFIG } from './config/cors';
 
