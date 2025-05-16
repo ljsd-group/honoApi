@@ -78,7 +78,6 @@ app.openapi(
 	async (c: Context<Env>) => {
 		try {
 			// 获取请求头
-			const auth = c.req.header("Auth")
 			const deviceNumber = c.req.header("deviceNumber")
 			const phoneModel = c.req.header("phoneModel")
 			const version = c.req.header("version")
@@ -87,14 +86,13 @@ app.openapi(
 			// 检查必要的参数
 			if (!deviceNumber) {
 				return c.json({
-					success: false,
+					code: 500,
 					message: "缺少设备号"
-				}, 400);
+				}, 200);
 			}
 
 			// 检查授权 - 从中间件获取用户信息
 			const user = (c as any).get("user")
-			console.log("访问代理接口的用户信息:", user)
 			
 			// 确保有用户信息和auth0_sub
 			if (!user || !user.auth0_sub) {
@@ -123,7 +121,6 @@ app.openapi(
 
 			// 获取响应数据
 			const responseData = await response.json() as Record<string, any>;
-			console.log("代理请求成功:", responseData)
 			const responMessage = {
 				code: responseData.code,
 				message: responseData.msg,
@@ -134,7 +131,6 @@ app.openapi(
 					// 使用auth0_sub解除设备关联
 					console.log(`使用auth0_sub=${user.auth0_sub}解除设备=${deviceNumber}的关联`);
 					const unbindResult = await accountService.unBindDeviceByAuth0Sub(user.auth0_sub, deviceNumber);
-					console.log('解除设备关联结果:', unbindResult);
 				} catch (dbError) {
 					console.error(`解除设备关联失败:`, dbError);
 					// 数据库操作失败不影响API响应，但记录错误信息
