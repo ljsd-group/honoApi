@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { errorHandler, logger, responseMiddleware } from "./middlewares";
+import { errorHandler, logger, responseMiddleware, requestMonitor } from "./middlewares";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { registerApiRoutes } from "./routes/api";
 import { OpenAPIHono } from "@hono/zod-openapi";
@@ -36,6 +36,9 @@ const app = new OpenAPIHono<Env>();
 // ========================= 重要 =============================
 // 配置CORS中间件（放在最前面，确保所有请求都能正确处理CORS）
 app.use('*', cors(CORS_CONFIG));
+
+// 注册全局请求监控中间件（默认关闭，需通过环境变量启用）
+app.use('*', requestMonitor);
 
 // 注册全局中间件
 app.use('*', logger);

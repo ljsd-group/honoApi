@@ -200,16 +200,10 @@ app.openapi(
   },
   // 使用 any 类型避免类型错误
   (async (c: any) => {
-    console.log("========== 请求已到达auth0Verify处理函数 ==========");
     try {
       // 获取请求体中的访问令牌和登录类型
-      console.log("请求头信息:", c.req.header());
-      console.log("请求方法:", c.req.method);
-      console.log("请求路径:", c.req.path);
-      
       try {
         const body = await c.req.json();
-        console.log("解析的请求体:", body);
         
         // 确保loginType是数字类型
         let { access_token, loginType } = body;
@@ -224,7 +218,6 @@ app.openapi(
         
         // 检查loginType是否为有效的值
         if (loginType !== LOGIN_TYPE.APPLE && loginType !== LOGIN_TYPE.GOOGLE) {
-          console.log(`收到非标准登录类型: ${loginType}`);
           return error(c, `不支持的登录类型：${loginType}，目前只支持1(Apple)和2(Google)`, ResponseCode.INTERNAL_ERROR, 200);
         }
         
@@ -234,7 +227,6 @@ app.openapi(
         const country_code = c.req.header("countryCode");
         const version = c.req.header("version");
         
-        console.log("device_number:", device_number);
         
         if (!access_token) {
           return error(c, "访问令牌不能为空", ResponseCode.INTERNAL_ERROR, 200);
@@ -247,7 +239,6 @@ app.openapi(
 
         if (!userInfoResponse.ok) {
           const errorText = await userInfoResponse.text().catch(() => '未知错误');
-          console.error("无效的访问令牌:", errorText);
           return error(c, `无效的访问令牌: ${errorText}`, ResponseCode.INTERNAL_ERROR, 200);
         }
 

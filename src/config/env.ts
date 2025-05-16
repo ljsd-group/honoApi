@@ -164,6 +164,18 @@ export const ENV = {
   
   // 日志级别
   LOG_LEVEL: getEnvString('LOG_LEVEL', currentEnv === 'production' ? 'info' : 'debug'),
+
+  // 请求监控中间件配置
+  REQUEST_MONITOR: {
+    // 是否启用请求监控，默认关闭
+    ENABLED: getEnvBoolean('REQUEST_MONITOR_ENABLED', true),
+    // 是否记录请求体内容
+    LOG_BODY: getEnvBoolean('REQUEST_MONITOR_LOG_BODY', true),
+    // 是否尝试解析JSON
+    PARSE_JSON: getEnvBoolean('REQUEST_MONITOR_PARSE_JSON', true),
+    // 路径过滤（可选，支持通配符路径）
+    PATH_PATTERNS: getEnvArray('REQUEST_MONITOR_PATHS', ['*']),
+  },
 };
 
 /**
