@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import findSubscribeProxyApp from "../endpoints/proxy/findSubscribeProxy";
+import logoffProxyApp from "../endpoints/proxy/logoffProxy";
 
 // 定义环境类型
 type Env = {
@@ -12,6 +13,9 @@ export const proxyRouter = new OpenAPIHono<Env>();
 
 // 挂载图片订阅代理端点
 proxyRouter.route('/find-subscribe', findSubscribeProxyApp);
+
+// 挂载退出登录代理端点
+proxyRouter.route('/logoff', logoffProxyApp);
 
 /**
  * 注册代理相关路由

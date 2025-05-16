@@ -1,6 +1,9 @@
 import { db } from '../config/database';
-import { accounts, users } from '../db/schema';
+import { accounts, users, deviceAccounts, devices } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
+// 引入JWT验证工具
+import { verify } from 'hono/jwt';
+import { JWT_CONFIG } from '../config/auth';
 
 // 账户类型定义
 export interface Account {
@@ -12,7 +15,6 @@ export interface Account {
   email?: string;
   email_verified?: boolean;
   picture?: string;
-  device_number?: string;
   loginType?: number;
   created_at?: Date;
   updated_at?: Date;
@@ -51,37 +53,37 @@ export class AccountService {
     }
   }
   
-  // 根据设备号查找账户
-  async findAccountByDeviceNumber(deviceNumber: string) {
+  // 根据设备号查找设备
+  async findDeviceByNumber(deviceNumber: string) {
     try {
       const result = await db.select()
-        .from(accounts)
-        .where(eq(accounts.device_number, deviceNumber))
+        .from(devices)
+        .where(eq(devices.device_number, deviceNumber))
         .limit(1);
       
       return result.length > 0 ? result[0] : null;
     } catch (error) {
-      console.error('通过设备号查找账户失败:', error);
+      console.error('通过设备号查找设备失败:', error);
       throw error;
     }
   }
   
-  // 根据设备号和Auth0 sub查找账户
-  async findAccountByDeviceAndAuth0Sub(deviceNumber: string, auth0Sub: string) {
+  // 根据账户ID和设备ID查找关联
+  async findDeviceAccountRelation(accountId: number, deviceId: number) {
     try {
       const result = await db.select()
-        .from(accounts)
+        .from(deviceAccounts)
         .where(
           and(
-            eq(accounts.device_number, deviceNumber),
-            eq(accounts.auth0_sub, auth0Sub)
+            eq(deviceAccounts.account_id, accountId),
+            eq(deviceAccounts.device_id, deviceId)
           )
         )
         .limit(1);
       
       return result.length > 0 ? result[0] : null;
     } catch (error) {
-      console.error('通过设备号和Auth0 sub查找账户失败:', error);
+      console.error('查找设备账户关联失败:', error);
       throw error;
     }
   }
@@ -115,7 +117,6 @@ export class AccountService {
           email: accountData.email,
           email_verified: accountData.email_verified,
           picture: accountData.picture,
-          device_number: accountData.device_number,
           loginType: accountData.loginType,
           updated_at: new Date()
         })
@@ -143,7 +144,6 @@ export class AccountService {
             email: accountData.email,
             email_verified: accountData.email_verified,
             picture: accountData.picture,
-            device_number: accountData.device_number,
             loginType: accountData.loginType,
             updated_at: new Date()
           })
@@ -178,16 +178,64 @@ export class AccountService {
     }
   }
   
-  // 更新设备号
-  async updateDeviceNumber(accountId: number, deviceNumber: string) {
+  // 直接使用auth0_sub解除设备关联(重写的方法)
+  async unBindDeviceByAuth0Sub(auth0Sub: string, deviceNumber: string) {
     try {
-      await db.update(accounts)
-        .set({ device_number: deviceNumber })
-        .where(eq(accounts.id, accountId));
+      // 查找账户
+      const account = await this.findAccountByAuth0Sub(auth0Sub);
       
-      return true;
+      if (!account || !account.id) {
+        return { success: false, message: '未找到匹配的账户' };
+      }
+      
+      // 查找设备
+      const device = await this.findDeviceByNumber(deviceNumber);
+      
+      if (!device || !device.id) {
+        return { success: false, message: '未找到匹配的设备' };
+      }
+      
+      // 查找设备和账户的关联记录
+      const relation = await this.findDeviceAccountRelation(account.id, device.id);
+      
+      if (!relation) {
+        return { success: false, message: '设备与账户未关联' };
+      }
+      
+      // 使用事务保证操作的原子性
+      return await db.transaction(async (trx) => {
+        // 1. 删除设备和账户的关联记录
+        const relationResult = await trx.delete(deviceAccounts)
+          .where(
+            and(
+              eq(deviceAccounts.device_id, device.id),
+              eq(deviceAccounts.account_id, account.id)
+            )
+          )
+          .returning();
+        
+        const relationDeletedCount = relationResult.length;
+        console.log(`已删除关联记录: accountId=${account.id}, deviceId=${device.id}, 数量=${relationDeletedCount}`);
+        
+        // 2. 删除设备表中的记录
+        const deviceResult = await trx.delete(devices)
+          .where(eq(devices.id, device.id))
+          .returning();
+        
+        const deviceDeletedCount = deviceResult.length;
+        console.log(`已删除设备记录: deviceId=${device.id}, deviceNumber=${deviceNumber}, 数量=${deviceDeletedCount}`);
+        
+        return { 
+          success: true, 
+          message: `成功解除设备关联并删除设备记录`,
+          relationDeletedCount,
+          deviceDeletedCount,
+          accountId: account.id,
+          deviceId: device.id
+        };
+      });
     } catch (error) {
-      console.error('更新设备号失败:', error);
+      console.error('解除设备关联失败:', error);
       throw error;
     }
   }

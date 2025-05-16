@@ -134,7 +134,7 @@ export async function userMiddleware(c: Context, next: Next) {
     
     // 判断是Auth0用户还是普通用户
     const isAuth0User = !!payload.auth0_sub;
-    
+    console.log("payload.sub:", payload);
     if (isAuth0User) {
       // 处理Auth0用户 - payload.sub是accounts表的ID
       const account = await accountService.findAccountById(Number(payload.sub));
@@ -145,7 +145,7 @@ export async function userMiddleware(c: Context, next: Next) {
           id: account.id, // accounts表的ID
           email: account.email,
           auth0_sub: account.auth0_sub,
-          device_number: account.device_number,
+          device_number: payload.device_number,
           isAuth0User: true,
           role: 'user' // 默认角色
         };
