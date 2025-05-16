@@ -20,8 +20,6 @@ export const accounts = pgTable('accounts', {
   email: varchar('email', { length: 255 }),
   email_verified: boolean('email_verified').default(false),
   picture: varchar('picture', { length: 1000 }),
-  device_number: varchar('device_number', { length: 255 }), // 设备号，不再需要
-  loginType: integer('login_type').default(1), // 登录类型：1=Apple，2=Google
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow()
 });
@@ -33,6 +31,7 @@ export const devices = pgTable('devices', {
   phone_model: varchar('phone_model', { length: 100 }), // 设备型号
   country_code: varchar('country_code', { length: 10 }), // 国家代码
   version: varchar('version', { length: 20 }), // 应用版本
+  loginType: integer('login_type').default(1), // 登录类型：1=Apple，2=Google，从accounts表移动过来
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow()
 });
@@ -49,4 +48,4 @@ export const deviceAccounts = pgTable('device_accounts', {
   return {
     pk: primaryKey({ columns: [table.account_id, table.device_id] }), // 复合主键
   }
-}); 
+});

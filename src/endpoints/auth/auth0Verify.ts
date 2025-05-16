@@ -57,7 +57,11 @@ const auth0VerifyResponseSchema = z.object({
     account: z.object({
       id: z.number().optional(),
       auth0_sub: z.string(),
-      device_number: z.string().optional(),
+      device_number: z.string().optional()
+    }).optional(),
+    device: z.object({
+      id: z.number().optional(),
+      device_number: z.string(),
       loginType: z.number().optional()
     }).optional()
   }),
@@ -261,8 +265,7 @@ app.openapi(
             nickname: userInfo.nickname,
             email: userInfo.email,
             email_verified: userInfo.email_verified,
-            picture: userInfo.picture,
-            loginType: loginType
+            picture: userInfo.picture
           });
         } else {
           // 如果账户已存在，更新账户信息
@@ -275,22 +278,23 @@ app.openapi(
               nickname: userInfo.nickname,
               email: userInfo.email,
               email_verified: userInfo.email_verified,
-              picture: userInfo.picture,
-              loginType: loginType
+              picture: userInfo.picture
             });
             // 使用类型断言解决类型问题
             account = updatedAccount as any;
           }
         }
         
-        // 如果有设备号，处理设备关联
+        // 处理设备和账户关联
+        let device;
         if (device_number) {
-          // 查找或创建设备
-          const device = await deviceService.findOrCreateDevice(
+          // 查找或创建设备，同时传入loginType
+          device = await deviceService.findOrCreateDevice(
             device_number,
             phone_model,
             country_code,
-            version
+            version,
+            loginType // 将loginType存储在设备表中
           );
           
           if (device && account && account.id && device.id) {
@@ -306,22 +310,19 @@ app.openapi(
           name: userInfo.name || '',
           email: userInfo.email || '',
           device_number: device_number || '', // 保留设备号在token中
-          loginType: loginType, // 包含登录类型
           exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60 *30, // 30天后过期
         }, JWT_CONFIG.SECRET || 'default_secret');
 
         // 处理账户中的null值，替换为空字符串
         const processedAccount = replaceNullWithEmptyString(account);
+        // 如果有设备信息，也处理设备信息中的null值
+        const processedDevice = device ? replaceNullWithEmptyString(device) : null;
         
-        // 查询关联的设备列表（可选）
-        // const devicesList = device_number ? 
-        //   await deviceService.findDevicesByAccountId(account.id!) : [];
-
-        // 返回用户信息、账户信息和JWT令牌
+        // 返回用户信息、账户信息、设备信息和JWT令牌
         return success(c, {
           token, // JWT令牌
-          account: processedAccount
-          // devices: devicesList // 可选：返回关联的设备列表
+          account: processedAccount,
+          device: processedDevice // 返回设备信息，包含loginType
         }, "令牌验证成功");
       } catch (jsonErr) {
         console.error("解析请求体失败:", jsonErr);

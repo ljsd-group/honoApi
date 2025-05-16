@@ -9,6 +9,7 @@ export interface Device {
   phone_model?: string;
   country_code?: string;
   version?: string;
+  loginType?: number;  // 添加登录类型字段：1=Apple，2=Google
   created_at?: Date;
   updated_at?: Date;
 }
@@ -60,7 +61,7 @@ export class DeviceService {
   }
   
   // 创建或查找设备
-  async findOrCreateDevice(deviceNumber: string, phoneModel?: string, countryCode?: string, version?: string) {
+  async findOrCreateDevice(deviceNumber: string, phoneModel?: string, countryCode?: string, version?: string, loginType?: number) {
     try {
       // 先查找设备
       let device = await this.findDeviceByNumber(deviceNumber);
@@ -71,15 +72,17 @@ export class DeviceService {
           device_number: deviceNumber,
           phone_model: phoneModel,
           country_code: countryCode,
-          version: version
+          version: version,
+          loginType: loginType
         });
-      } else if (phoneModel || countryCode || version) {
+      } else if (phoneModel || countryCode || version || loginType) {
         // 如果设备存在但提供了额外信息，则更新设备
         await db.update(devices)
           .set({
             phone_model: phoneModel || device.phone_model,
             country_code: countryCode || device.country_code,
             version: version || device.version,
+            loginType: loginType !== undefined ? loginType : device.loginType,
             updated_at: new Date()
           })
           .where(eq(devices.id, device.id));
@@ -91,6 +94,23 @@ export class DeviceService {
       return device;
     } catch (error) {
       console.error('查找或创建设备失败:', error);
+      throw error;
+    }
+  }
+  
+  // 更新设备登录类型
+  async updateDeviceLoginType(deviceId: number, loginType: number) {
+    try {
+      await db.update(devices)
+        .set({
+          loginType: loginType,
+          updated_at: new Date()
+        })
+        .where(eq(devices.id, deviceId));
+      
+      return true;
+    } catch (error) {
+      console.error('更新设备登录类型失败:', error);
       throw error;
     }
   }
