@@ -35,7 +35,7 @@ export const requestMonitor: MiddlewareHandler = async (c: Context, next: Next) 
   }
 
   // 开始输出请求信息
-  console.log(`\n======= 请求监控 [${new Date().toISOString()}] =======`);
+  console.log(`\n======= 请求监控 [${new Date().toLocaleString()}] =======`);
   console.log('请求方法:', c.req.method);
   console.log('请求路径:', c.req.path);
   console.log('内容类型:', c.req.header('Content-Type'));
