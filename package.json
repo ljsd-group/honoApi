@@ -13,8 +13,8 @@
 		"db:init": "npx tsx scripts/db-migrate.ts init",
 		"db:users": "npx tsx scripts/db-migrate.ts users",
 		"db:accounts": "npx tsx scripts/db-migrate.ts accounts",
-		"db:login-type": "npx tsx scripts/db-migrate.ts login-type",
 		"db:device-accounts": "npx tsx scripts/db-migrate.ts device-accounts",
+		"db:move-login-type-to-devices": "npx tsx scripts/db-migrate.ts move-login-type-to-devices",
 		"add-test-users": "npx tsx scripts/add-test-users.ts"
 	},
 	"dependencies": {

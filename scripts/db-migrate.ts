@@ -19,7 +19,7 @@ const ADMIN_DB_CONFIG = {
 };
 
 // 迁移类型
-type MigrationType = 'init' | 'users' | 'accounts' | 'login-type' | 'device-accounts' | 'all';
+type MigrationType = 'init' | 'users' | 'accounts' | 'login-type' | 'device-accounts' | 'move-login-type-to-devices' | 'all';
 
 /**
  * 执行SQL文件迁移
@@ -122,6 +122,19 @@ async function migrateDeviceAccounts(pool: Pool): Promise<void> {
 }
 
 /**
+ * 将loginType从accounts表迁移到devices表
+ */
+async function moveLoginTypeToDevices(pool: Pool): Promise<void> {
+  console.log('开始将loginType从accounts表迁移到devices表...');
+  
+  const sqlFilePath = path.join(process.cwd(), 'src/db/migrations/move_login_type_to_devices.sql');
+  await executeSqlFile(pool, sqlFilePath);
+  
+  console.log('成功将loginType从accounts表迁移到devices表');
+  console.log('成功删除accounts表中device_number和login_type字段');
+}
+
+/**
  * 执行数据库迁移
  */
 async function migrate(type: MigrationType = 'all'): Promise<void> {
@@ -144,12 +157,13 @@ async function migrate(type: MigrationType = 'all'): Promise<void> {
       await migrateAccounts(pool);
     }
     
-    if (type === 'login-type' || type === 'all') {
-      await addLoginType(pool);
-    }
     
     if (type === 'device-accounts' || type === 'all') {
       await migrateDeviceAccounts(pool);
+    }
+    
+    if (type === 'move-login-type-to-devices' || type === 'all') {
+      await moveLoginTypeToDevices(pool);
     }
     
     console.log(`${type === 'all' ? '所有' : type}迁移操作完成!`);

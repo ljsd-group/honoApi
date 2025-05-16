@@ -113,9 +113,8 @@ app.openapi(
 			const url = new URL(apiUrl)
 			// 转发请求到第三方API
 			const response = await fetch(url.toString(), {
-				method: "POST",
+				method: "get",
 				headers: {
-					Auth: auth || "",
 					deviceNumber: deviceNumber,
 					phoneModel: phoneModel || "ios", // 默认为ios
 					version: version || "",
