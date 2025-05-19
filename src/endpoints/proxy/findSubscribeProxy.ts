@@ -100,13 +100,18 @@ app.openapi(
 			})
 
 			// 只获取一次并使用响应数据，避免多次读取流
-			const responseData = await response.json()
+			const responseData = await response.json()as Record<string, any>;
 
 			// 获取状态码
 			const statusCode = response.status >= 200 && response.status < 600 ? (response.status as 200 | 400 | 500) : 500
-
+			// 格式化响应
+			const formattedResponse = {
+				code: responseData.code || response.status,
+				message: responseData.msg || responseData.message || "操作完成",
+				data: responseData.data || responseData
+			};
 			// 创建新的响应对象，而不是修改现有流
-			return c.json(responseData, statusCode)
+			return c.json(formattedResponse, statusCode)
 		} catch (err) {
 			console.error("代理请求失败:", err)
 			// 确保只返回一次响应
