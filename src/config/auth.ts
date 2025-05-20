@@ -50,7 +50,7 @@ export const AUTH_WHITELIST = [
   '/api/auth/auth0',     // Auth0 登录端点
   '/api/auth/verify',    // Auth0 令牌验证端点
   '/api/auth/apple-app-site-association',
-  
+  '/api/proxy/common',
   // 文档和健康检查API不需要鉴权
   '/',
   '/openapi.json',

@@ -214,19 +214,19 @@ export class AccountService {
         const relationDeletedCount = relationResult.length;
         console.log(`已删除关联记录: accountId=${account.id}, deviceId=${device.id}, 数量=${relationDeletedCount}`);
         
-        // 2. 删除设备表中的记录
-        const deviceResult = await trx.delete(devices)
-          .where(eq(devices.id, device.id))
+        // 2. 删除账户表中的记录
+        const accountResult = await trx.delete(accounts)
+          .where(eq(accounts.id, account.id))
           .returning();
         
-        const deviceDeletedCount = deviceResult.length;
-        console.log(`已删除设备记录: deviceId=${device.id}, deviceNumber=${deviceNumber}, 数量=${deviceDeletedCount}`);
+        const accountDeletedCount = accountResult.length;
+        console.log(`已删除账户记录: accountId=${account.id}, auth0Sub=${auth0Sub}, 数量=${accountDeletedCount}`);
         
         return { 
           success: true, 
-          message: `成功解除设备关联并删除设备记录`,
+          message: `成功解除设备关联并删除账户记录`,
           relationDeletedCount,
-          deviceDeletedCount,
+          accountDeletedCount,
           accountId: account.id,
           deviceId: device.id
         };

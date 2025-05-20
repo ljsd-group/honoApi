@@ -128,11 +128,11 @@ app.openapi(
 			// 如果代理请求成功，解除设备与账户的关联
 			if (response.ok) {
 				try {
-					// 使用auth0_sub解除设备关联
-					console.log(`使用auth0_sub=${user.auth0_sub}解除设备=${deviceNumber}的关联`);
+					// 使用auth0_sub解除设备关联和删除账户
+					console.log(`使用auth0_sub=${user.auth0_sub}解除设备=${deviceNumber}的关联并删除账户`);
 					const unbindResult = await accountService.unBindDeviceByAuth0Sub(user.auth0_sub, deviceNumber);
 				} catch (dbError) {
-					console.error(`解除设备关联失败:`, dbError);
+					console.error(`解除设备关联和删除账户失败:`, dbError);
 					// 数据库操作失败不影响API响应，但记录错误信息
 				}
 			}
