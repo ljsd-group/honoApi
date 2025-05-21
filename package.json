@@ -29,8 +29,6 @@
 		"db:prod:pull": "npx tsx scripts/db-drizzle-prod.ts pull",
 		"db:prod:check": "npx tsx scripts/db-drizzle-prod.ts check",
 		"db:test-env": "npx tsx scripts/test-prod-env.ts",
-		"db:prod:seed": "npx tsx scripts/seed-prod.ts",
-		"test:db": "npx tsx scripts/test-db-connection.ts"
 	},
 	"dependencies": {
 		"@hono/swagger-ui": "^0.5.1",
