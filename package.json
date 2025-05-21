@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "NODE_ENV=development vite dev",
 		"build": "vite build",
-		"deploy": "vite build && wrangler deploy",
+		"deploy": "NODE_ENV=staging vite build && wrangler deploy --env staging",
 		"staging": "NODE_ENV=staging vite build && wrangler deploy --env staging",
 		"start": "vite dev",
 		"cf-typegen": "wrangler types",
