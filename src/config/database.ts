@@ -3,7 +3,7 @@ import { Pool } from 'pg';
 import * as schema from '../db/schema';
 
 // 获取数据库连接字符串
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.VITE_DATABASE_URL;
 
 if (!connectionString) {
   throw new Error('数据库连接字符串未配置');
