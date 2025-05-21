@@ -1,10 +1,9 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import 'dotenv/config';
 import * as schema from './schema';
 
 // 获取数据库连接字符串
-const connectionString = process.env.VITE_DATABASE_URL;
+const connectionString = process.env.VITE_DATABASE_URL || process.env.DATABASE_URL;
 
 // 创建 PostgreSQL 连接池
 const pool = new Pool({

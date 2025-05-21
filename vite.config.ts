@@ -5,6 +5,10 @@ import { resolve } from 'path';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  
+  // 确保有默认的数据库连接字符串
+  const databaseUrl = env.DATABASE_URL || env.VITE_DATABASE_URL;
+  
   return {
     resolve: {
       alias: {
@@ -26,11 +30,9 @@ export default defineConfig(({ mode }) => {
       })
     ],
     define: {
-      'process.env': {
-        ...env,
-        NODE_ENV: mode,
-        DATABASE_URL: JSON.stringify(env.VITE_DATABASE_URL)
-      }
+      // 安全地定义环境变量
+      'process.env.DATABASE_URL': JSON.stringify(databaseUrl),
+      'process.env.NODE_ENV': JSON.stringify(mode)
     },
     build: {
       // 使用最新的ES标准，Cloudflare Workers支持最新的JS特性
@@ -50,6 +52,7 @@ export default defineConfig(({ mode }) => {
           'pg-native',
           'pg',
           'dotenv',
+          'dotenv/config',
           'drizzle-orm',
           'drizzle-kit',
           '@neondatabase/serverless',
