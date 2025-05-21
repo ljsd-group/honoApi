@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "NODE_ENV=development vite dev",
 		"build": "vite build",
-		"deploy": "NODE_ENV=staging vite build && wrangler deploy --env staging",
+		"deploy": "vite build && wrangler deploy",
 		"staging": "NODE_ENV=staging vite build && wrangler deploy --env staging",
 		"start": "vite dev",
 		"cf-typegen": "wrangler types",
@@ -28,7 +28,9 @@
 		"db:prod:push": "npx tsx scripts/db-drizzle-prod.ts push",
 		"db:prod:pull": "npx tsx scripts/db-drizzle-prod.ts pull",
 		"db:prod:check": "npx tsx scripts/db-drizzle-prod.ts check",
-		"db:test-env": "npx tsx scripts/test-prod-env.ts"
+		"db:test-env": "npx tsx scripts/test-prod-env.ts",
+		"db:prod:seed": "npx tsx scripts/seed-prod.ts",
+		"test:db": "npx tsx scripts/test-db-connection.ts"
 	},
 	"dependencies": {
 		"@hono/swagger-ui": "^0.5.1",
@@ -42,6 +44,7 @@
 		"mysql2": "^3.14.1",
 		"pg": "^8.15.6",
 		"pg-hstore": "^2.3.4",
+		"postgres": "^3.4.3",
 		"zod": "^3.24.1"
 	},
 	"devDependencies": {

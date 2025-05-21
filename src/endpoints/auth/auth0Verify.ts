@@ -1,8 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { z } from "zod";
 import { success, error, ResponseCode } from "../../utils/response";
-import { AUTH0_CONFIG, JWT_CONFIG } from "../../config/auth";
-import { Context } from "hono";
+import { JWT_CONFIG } from "../../config/auth";
 import { AccountService } from "../../services/accountService";
 import { DeviceService } from "../../services/deviceService";
 import { sign } from "hono/jwt";
@@ -224,13 +223,23 @@ app.openapi(
           return error(c, "无效的应用ID格式", ResponseCode.INTERNAL_ERROR, 200);
         }
 
-        // 根据appId获取应用信息
-        const app = await db.query.applications.findFirst({
-          where: eq(applications.id, appId)
-        });
-
-        if (!app) {
-          return error(c, "无效的应用ID", ResponseCode.INTERNAL_ERROR, 200);
+        // 根据appId获取应用信息 - 使用标准Drizzle查询
+        let appDomain;
+        try {
+          const results = await db.select()
+            .from(applications)
+            .where(eq(applications.id, appId))
+            .limit(1);
+          
+          const appRecord = results.length > 0 ? results[0] : null;
+          
+          if (!appRecord) {
+            return error(c, "无效的应用ID", ResponseCode.INTERNAL_ERROR, 200);
+          }
+          appDomain = appRecord.domain;
+        } catch (err) {
+          console.error("查询应用信息失败:", err);
+          return error(c, "查询应用信息时发生错误", ResponseCode.INTERNAL_ERROR, 500);
         }
 
         // 如果没有提供loginType，使用默认值
@@ -256,7 +265,7 @@ app.openapi(
         }
 
         // 使用应用的domain获取用户信息
-        const userInfoResponse = await fetch(`https://${app.domain}/userinfo`, {
+        const userInfoResponse = await fetch(`https://${appDomain}/userinfo`, {
           headers: { Authorization: `Bearer ${access_token}` }
         });
 
@@ -340,7 +349,7 @@ app.openapi(
           device: processedDevice // 返回设备信息，包含loginType
         }, "令牌验证成功");
       } catch (jsonErr) {
-        console.error("解析请求体失败:", jsonErr);
+        console.log("解析请求体失败:", jsonErr);
         return error(c, "无效的请求格式，请确保发送正确的JSON格式", ResponseCode.BAD_REQUEST, 400);
       }
     } catch (err) {
