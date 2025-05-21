@@ -15,6 +15,7 @@ export interface Account {
   email?: string;
   email_verified?: boolean;
   picture?: string;
+  app_id?: number;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -116,6 +117,7 @@ export class AccountService {
           email: accountData.email,
           email_verified: accountData.email_verified,
           picture: accountData.picture,
+          app_id: accountData.app_id,
           updated_at: new Date()
         })
         .where(eq(accounts.id, accountData.id));

@@ -12,6 +12,13 @@ export default {
   dbCredentials: {
     url: getDatabaseUrl(),
   },
+  "tablesFilter": [
+        "accounts",
+        "users",
+        "devices",
+        "device_accounts",
+        "applications"
+  ],
   // 可选: 指定迁移后是否要验证模式
   verbose: true,
   // 可选: 是否在控制台输出 SQL 语句

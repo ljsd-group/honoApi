@@ -1,4 +1,5 @@
 import { pgTable, varchar, serial, timestamp, text, integer, boolean, primaryKey } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 // 定义Users表
 export const users = pgTable('users', {
@@ -6,6 +7,7 @@ export const users = pgTable('users', {
   username: varchar('username', { length: 50 }).notNull().unique(),
   password: varchar('password', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
+  appId: integer('app_id').references(() => applications.id), // 关联到应用表
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow()
 });
@@ -20,6 +22,7 @@ export const accounts = pgTable('accounts', {
   email: varchar('email', { length: 255 }),
   email_verified: boolean('email_verified').default(false),
   picture: varchar('picture', { length: 1000 }),
+  app_id: integer('app_id').references(() => applications.id), // 关联到应用表
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow()
 });
@@ -48,4 +51,13 @@ export const deviceAccounts = pgTable('device_accounts', {
   return {
     pk: primaryKey({ columns: [table.account_id, table.device_id] }), // 复合主键
   }
+});
+
+// 定义应用表
+export const applications = pgTable('applications', {
+  id: serial('id').primaryKey(),
+  appName: varchar('app_name', { length: 100 }).notNull(),
+  domain: varchar('domain', { length: 255 }).notNull(),
+  createdAt: integer('created_at').notNull().default(sql`EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)`), // 自动生成秒级时间戳
+  updatedAt: integer('updated_at').notNull().default(sql`EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)`) // 自动生成秒级时间戳
 });

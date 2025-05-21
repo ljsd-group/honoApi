@@ -6,6 +6,9 @@ import { Context } from "hono";
 import { AccountService } from "../../services/accountService";
 import { DeviceService } from "../../services/deviceService";
 import { sign } from "hono/jwt";
+import { db } from "../../db";
+import { applications } from "../../db/schema";
+import { eq } from "drizzle-orm";
 
 // 环境类型定义
 type Env = {
@@ -40,7 +43,11 @@ const auth0VerifySchema = z.object({
   loginType: z.union([
     z.number(),
     z.string().transform(val => Number(val))
-  ]).default(LOGIN_TYPE.APPLE)
+  ]).default(LOGIN_TYPE.APPLE),
+  appId: z.union([
+    z.number(),
+    z.string().transform(val => Number(val))
+  ])
 });
 
 // 定义响应类型
@@ -206,13 +213,30 @@ app.openapi(
         const body = await c.req.json();
         
         // 确保loginType是数字类型
-        let { access_token, loginType } = body;
+        let { access_token, loginType, appId } = body;
         
+        // 验证appId是否存在并转换为数字
+        if (!appId) {
+          return error(c, "应用ID不能为空", ResponseCode.INTERNAL_ERROR, 200);
+        }
+        appId = Number(appId);
+        if (isNaN(appId)) {
+          return error(c, "无效的应用ID格式", ResponseCode.INTERNAL_ERROR, 200);
+        }
+
+        // 根据appId获取应用信息
+        const app = await db.query.applications.findFirst({
+          where: eq(applications.id, appId)
+        });
+
+        if (!app) {
+          return error(c, "无效的应用ID", ResponseCode.INTERNAL_ERROR, 200);
+        }
+
         // 如果没有提供loginType，使用默认值
         if (loginType === undefined || loginType === null) {
           loginType = LOGIN_TYPE.APPLE;
         } else {
-          // 将loginType转换为数字
           loginType = Number(loginType);
         }
         
@@ -227,13 +251,12 @@ app.openapi(
         const country_code = c.req.header("countryCode");
         const version = c.req.header("version");
         
-        
         if (!access_token) {
           return error(c, "访问令牌不能为空", ResponseCode.INTERNAL_ERROR, 200);
         }
 
-        // 使用访问令牌获取用户信息
-        const userInfoResponse = await fetch(`https://${AUTH0_CONFIG.DOMAIN}/userinfo`, {
+        // 使用应用的domain获取用户信息
+        const userInfoResponse = await fetch(`https://${app.domain}/userinfo`, {
           headers: { Authorization: `Bearer ${access_token}` }
         });
 
@@ -256,7 +279,8 @@ app.openapi(
             nickname: userInfo.nickname,
             email: userInfo.email,
             email_verified: userInfo.email_verified,
-            picture: userInfo.picture
+            picture: userInfo.picture,
+            app_id: appId // 添加appId
           });
         } else {
           // 如果账户已存在，更新账户信息
@@ -269,9 +293,9 @@ app.openapi(
               nickname: userInfo.nickname,
               email: userInfo.email,
               email_verified: userInfo.email_verified,
-              picture: userInfo.picture
+              picture: userInfo.picture,
+              app_id: appId // 添加appId
             });
-            // 使用类型断言解决类型问题
             account = updatedAccount as any;
           }
         }

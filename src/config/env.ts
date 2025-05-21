@@ -140,7 +140,7 @@ export const ENV = {
   
   // Auth0 配置
   AUTH0: {
-    DOMAIN: getEnvString('AUTH0_DOMAIN', 'auth.ljsdstage.top'),
+    DOMAIN: getEnvString('AUTH0_DOMAIN', 'dev-ez5m18whai32urhj.us.auth0.com'),
     CLIENT_ID: getEnvString('AUTH0_CLIENT_ID', 'your-client-id'),
     CLIENT_SECRET: getEnvString('AUTH0_CLIENT_SECRET', 'your-client-secret'),
     REDIRECT_URI: getEnvString('AUTH0_REDIRECT_URI', 'http://localhost:3000/api/auth/callback'),

@@ -8,6 +8,20 @@
       "when": 1747734346068,
       "tag": "0000_deep_nocturne",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1747790417185,
+      "tag": "0001_easy_thunderball",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1747791115397,
+      "tag": "0002_wakeful_captain_marvel",
+      "breakpoints": true
     }
   ]
 }
