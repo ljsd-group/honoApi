@@ -7,6 +7,7 @@
 		"dev": "NODE_ENV=development vite dev",
 		"build": "vite build",
 		"deploy": "vite build && wrangler deploy",
+		"staging": "NODE_ENV=staging vite build && wrangler deploy --env staging",
 		"start": "vite dev",
 		"cf-typegen": "wrangler types",
 		"db:migrate": "npx tsx scripts/db-migrate.ts all",

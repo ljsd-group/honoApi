@@ -9,6 +9,7 @@
 	"observability": {
 		"enabled": true
 	},
+	
 	"vars": {
 		"API_BASE_PATH": "/api",
 		"LOG_LEVEL": "debug",
@@ -19,11 +20,19 @@
 		"JWT_SECRET": "3b97c48f7766afb388807f6c28f72342e0d9701c3ba73ef84efb8e50dd50b696c1b1e75894f4a3e0449b0c950669591788d04e5da38551f995b5c0ccf34864c9",
 		"JWT_EXPIRES_IN": "24h",
 		"JWT_ALGORITHM": "HS256",
-		"NODE_ENV": "development",
-		"VITE_DATABASE_URL": "postgresql: //neondb_owner:npg_ZFiyhNqxn6t9@ep-autumn-mode-abq99hds-pooler.eu-west-2.aws.neon.tech/auth-db?sslmode=require"
+		"VITE_DATABASE_URL": "postgresql://postgres:bXBcKw2wWybAXDtE@150.109.112.155:5432/manage_test"
 	},
 	"assets": {
 		"directory": "./public/",
 		"binding": "ASSETS"
 	},
+	
+	"env": {
+		"staging": {
+			"route": { 
+				"pattern": "auth0-dev.ljsdstage.top", 
+				"custom_domain": true 
+			}
+		}
+	}
 }

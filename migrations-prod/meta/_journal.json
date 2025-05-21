@@ -8,6 +8,13 @@
       "when": 1747735420651,
       "tag": "0000_slippery_impossible_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1747808979561,
+      "tag": "0001_white_makkari",
+      "breakpoints": true
     }
   ]
 }
