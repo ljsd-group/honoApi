@@ -1,4 +1,4 @@
-import { pgPool, db } from "../config/database";
+import { pgSql, db } from "../config/database";
 import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from 'bcryptjs';
@@ -30,18 +30,12 @@ export class UserService {
   // 通过用户名查找用户
   async findByUsername(username: string): Promise<UserRecord | null> {
     try {
-      const client = await pgPool.connect();
-      try {
-        // 查询用户
-        const result = await client.query(
-          'SELECT * FROM users WHERE username = $1',
-          [username]
-        );
-        
-        return result.rows.length > 0 ? result.rows[0] as UserRecord : null;
-      } finally {
-        client.release();
-      }
+      // 使用postgres库的标签模板字符串查询
+      const result = await pgSql`
+        SELECT * FROM users WHERE username = ${username}
+      `;
+      
+      return result.length > 0 ? result[0] as UserRecord : null;
     } catch (error) {
       console.error(`查找用户${username}失败:`, error);
       throw error;
@@ -86,18 +80,14 @@ export class UserService {
   // 创建新用户
   async createUser(userData: User): Promise<number> {
     try {
-      const client = await pgPool.connect();
-      try {
-        // 插入用户并返回ID
-        const result = await client.query(
-          'INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING id',
-          [userData.username, userData.password, userData.email]
-        );
-        
-        return result.rows[0].id;
-      } finally {
-        client.release();
-      }
+      // 使用postgres库的标签模板字符串插入
+      const result = await pgSql`
+        INSERT INTO users (username, password, email) 
+        VALUES (${userData.username}, ${userData.password}, ${userData.email}) 
+        RETURNING id
+      `;
+      
+      return result[0].id;
     } catch (error) {
       console.error('创建用户失败:', error);
       throw error;
@@ -107,16 +97,12 @@ export class UserService {
   // 获取所有用户
   async getAllUsers(): Promise<UserRecord[]> {
     try {
-      const client = await pgPool.connect();
-      try {
-        // 查询所有用户
-        const result = await client.query(
-          'SELECT id, username, email, created_at, updated_at FROM users'
-        );
-        return result.rows as UserRecord[];
-      } finally {
-        client.release();
-      }
+      // 使用postgres库的标签模板字符串查询
+      const result = await pgSql`
+        SELECT id, username, email, created_at, updated_at FROM users
+      `;
+      
+      return result as unknown as UserRecord[];
     } catch (error) {
       console.error('获取所有用户失败:', error);
       throw error;
@@ -126,18 +112,13 @@ export class UserService {
   // 通过ID获取用户
   async getUserById(id: number): Promise<UserRecord | null> {
     try {
-      const client = await pgPool.connect();
-      try {
-        // 查询用户
-        const result = await client.query(
-          'SELECT id, username, email, created_at, updated_at FROM users WHERE id = $1',
-          [id]
-        );
-        
-        return result.rows.length > 0 ? result.rows[0] as UserRecord : null;
-      } finally {
-        client.release();
-      }
+      // 使用postgres库的标签模板字符串查询
+      const result = await pgSql`
+        SELECT id, username, email, created_at, updated_at 
+        FROM users WHERE id = ${id}
+      `;
+      
+      return result.length > 0 ? result[0] as UserRecord : null;
     } catch (error) {
       console.error(`获取用户ID=${id}失败:`, error);
       throw error;
