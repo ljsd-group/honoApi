@@ -15,7 +15,19 @@
 		"db:accounts": "npx tsx scripts/db-migrate.ts accounts",
 		"db:device-accounts": "npx tsx scripts/db-migrate.ts device-accounts",
 		"db:move-login-type-to-devices": "npx tsx scripts/db-migrate.ts move-login-type-to-devices",
-		"add-test-users": "npx tsx scripts/add-test-users.ts"
+		"add-test-users": "npx tsx scripts/add-test-users.ts",
+		"generate": "drizzle-kit generate",
+		"migrate": "drizzle-kit push",
+		"db:generate": "npx tsx scripts/db-drizzle.ts generate",
+		"db:push": "npx tsx scripts/db-drizzle.ts push",
+		"db:pull": "npx tsx scripts/db-drizzle.ts pull",
+		"db:check": "npx tsx scripts/db-drizzle.ts check",
+		"db:studio": "npx tsx scripts/db-drizzle.ts studio",
+		"db:prod:generate": "npx tsx scripts/db-drizzle-prod.ts generate",
+		"db:prod:push": "npx tsx scripts/db-drizzle-prod.ts push",
+		"db:prod:pull": "npx tsx scripts/db-drizzle-prod.ts pull",
+		"db:prod:check": "npx tsx scripts/db-drizzle-prod.ts check",
+		"db:test-env": "npx tsx scripts/test-prod-env.ts"
 	},
 	"dependencies": {
 		"@hono/swagger-ui": "^0.5.1",
@@ -37,6 +49,7 @@
 		"@types/bcryptjs": "^3.0.0",
 		"@types/node": "22.13.0",
 		"@types/service-worker-mock": "^2.0.4",
+		"drizzle-kit": "^0.31.1",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.8.3",
 		"vite": "^6.3.5",

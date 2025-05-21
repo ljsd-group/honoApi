@@ -1,70 +1,29 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "honoapi",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-05-07",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	"observability": {
 		"enabled": true
 	},
-	/**
-	 * Smart Placement
-	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
-	 */
-	// "placement": { "mode": "smart" },
-
-	/**
-	 * Bindings
-	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-	 * databases, object storage, AI inference, real-time communication and more.
-	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-	 */
-
-	/**
-	 * Environment Variables
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
-	 */
-	"vars": { 
+	"vars": {
 		"API_BASE_PATH": "/api",
 		"LOG_LEVEL": "debug",
-		"AUTH0_DOMAIN": "dev-ez5m18whai32urhj.us.auth0.com",
+		"AUTH0_DOMAIN": "auth.ljsdstage.top",
 		"AUTH0_CLIENT_ID": "VdmyTgnRFY6RxYVoi8TdA2cZEXkFa4om",
 		"AUTH0_CLIENT_SECRET": "rDfUWZeuy2dKmNIt9GZ5ib2xhOWP1kVwgU7bW9zl7GW1TPXvdZh-277SFHaJapyL",
 		"AUTH0_REDIRECT_URI": "https://dev-ez5m18whai32urhj.us.auth0.com/api/auth/callback",
-		"JWT_SECRET": "your-secret-key-change-in-production",
+		"JWT_SECRET": "3b97c48f7766afb388807f6c28f72342e0d9701c3ba73ef84efb8e50dd50b696c1b1e75894f4a3e0449b0c950669591788d04e5da38551f995b5c0ccf34864c9",
 		"JWT_EXPIRES_IN": "24h",
 		"JWT_ALGORITHM": "HS256",
 		"NODE_ENV": "development",
-		"PORT": "3000",
-		"HOST": "0.0.0.0",
-		"FRONTEND_URL": "http://192.168.31.177:8080",
-		"CORS_ORIGINS": "http://192.168.31.177:8080",
-		"DB_HOST": "localhost",
-		"DB_PORT": "5432",
-		"DB_USER": "pguser",
-		"DB_PASSWORD": "123456",
-		"DB_NAME": "honostudy",
-		"DB_MAX_CONNECTIONS": "10",
-		"DB_IDLE_TIMEOUT": "30000"
+		"VITE_DATABASE_URL": "postgresql: //neondb_owner:npg_ZFiyhNqxn6t9@ep-autumn-mode-abq99hds-pooler.eu-west-2.aws.neon.tech/auth-db?sslmode=require"
 	},
-	/**
-	 * Note: Use secrets to store sensitive data.
-	 * https://developers.cloudflare.com/workers/configuration/secrets/
-	 */
-
-	/**
-	 * Static Assets
-	 * https://developers.cloudflare.com/workers/static-assets/binding/
-	 */
-	"assets": { "directory": "./public/", "binding": "ASSETS" },
-
-	/**
-	 * Service Bindings (communicate between multiple Workers)
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
-	 */
-	// "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
+	"assets": {
+		"directory": "./public/",
+		"binding": "ASSETS"
+	},
 }
