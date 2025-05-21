@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 8080,
-      host: true, // 允许通过IP地址访问
+      host: '0.0.0.0',
     },
     plugins: [
       // Hono开发服务器插件
@@ -21,12 +21,15 @@ export default defineConfig(({ mode }) => {
         entry: './src/vite.ts'
       }),
       // Node环境下的一些polyfills，用于解决一些兼容性问题
-      nodePolyfills()
+      nodePolyfills({
+        include: ['buffer', 'crypto', 'util', 'stream', 'path', 'os'],
+      })
     ],
     define: {
       'process.env': {
         ...env,
-        NODE_ENV: mode
+        NODE_ENV: mode,
+        DATABASE_URL: JSON.stringify(env.VITE_DATABASE_URL)
       }
     },
     build: {
@@ -43,7 +46,14 @@ export default defineConfig(({ mode }) => {
       // 确保不会打包node_modules中的依赖
       rollupOptions: {
         external: [
-          'cloudflare:sockets'
+          'cloudflare:sockets',
+          'pg-native',
+          'pg',
+          'dotenv',
+          'drizzle-orm',
+          'drizzle-kit',
+          '@neondatabase/serverless',
+          'postgres'
         ]
       }
     }
