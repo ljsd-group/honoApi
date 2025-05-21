@@ -1,9 +1,7 @@
 import { db } from '../config/database';
 import { accounts, users, deviceAccounts, devices } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
-// 引入JWT验证工具
-import { verify } from 'hono/jwt';
-import { JWT_CONFIG } from '../config/auth';
+
 
 // 账户类型定义
 export interface Account {
@@ -33,7 +31,6 @@ export class AccountService {
       
       return result.length > 0 ? result[0] : null;
     } catch (error) {
-      console.error('查找账户失败:', error);
       throw error;
     }
   }
@@ -48,7 +45,6 @@ export class AccountService {
       
       return result.length > 0 ? result[0] : null;
     } catch (error) {
-      console.error('通过ID查找账户失败:', error);
       throw error;
     }
   }
@@ -63,7 +59,6 @@ export class AccountService {
       
       return result.length > 0 ? result[0] : null;
     } catch (error) {
-      console.error('通过设备号查找设备失败:', error);
       throw error;
     }
   }
@@ -83,7 +78,6 @@ export class AccountService {
       
       return result.length > 0 ? result[0] : null;
     } catch (error) {
-      console.error('查找设备账户关联失败:', error);
       throw error;
     }
   }
@@ -101,7 +95,6 @@ export class AccountService {
         
       return result.length > 0 ? result[0] : null;
     } catch (error) {
-      console.error('创建账户失败:', error);
       throw error;
     }
   }
@@ -124,7 +117,6 @@ export class AccountService {
       
       return accountData;
     } catch (error) {
-      console.error('更新账户失败:', error);
       throw error;
     }
   }
@@ -158,7 +150,6 @@ export class AccountService {
         return await this.createAccount(accountData);
       }
     } catch (error) {
-      console.error('创建或更新账户失败:', error);
       throw error;
     }
   }
@@ -172,7 +163,6 @@ export class AccountService {
       
       return true;
     } catch (error) {
-      console.error('关联账户到用户失败:', error);
       throw error;
     }
   }
@@ -180,6 +170,7 @@ export class AccountService {
   // 直接使用auth0_sub解除设备关联(重写的方法)
   async unBindDeviceByAuth0Sub(auth0Sub: string, deviceNumber: string) {
     try {
+      
       // 查找账户
       const account = await this.findAccountByAuth0Sub(auth0Sub);
       
@@ -189,13 +180,14 @@ export class AccountService {
       
       // 查找设备
       const device = await this.findDeviceByNumber(deviceNumber);
-      
+
       if (!device || !device.id) {
         return { success: false, message: '未找到匹配的设备' };
       }
       
       // 查找设备和账户的关联记录
       const relation = await this.findDeviceAccountRelation(account.id, device.id);
+
       
       if (!relation) {
         return { success: false, message: '设备与账户未关联' };
@@ -203,30 +195,24 @@ export class AccountService {
       
       // 使用事务保证操作的原子性
       return await db.transaction(async (trx) => {
-        // 1. 删除设备和账户的关联记录
-        const relationResult = await trx.delete(deviceAccounts)
-          .where(
-            and(
-              eq(deviceAccounts.device_id, device.id),
-              eq(deviceAccounts.account_id, account.id)
-            )
-          )
+
+        
+        // 1. 先删除该账户的所有设备关联记录
+        console.log(`准备删除账户的所有关联记录: accountId=${account.id}`);        const relationResult = await trx.delete(deviceAccounts)
+          .where(eq(deviceAccounts.account_id, account.id))
           .returning();
         
         const relationDeletedCount = relationResult.length;
-        console.log(`已删除关联记录: accountId=${account.id}, deviceId=${device.id}, 数量=${relationDeletedCount}`);
-        
-        // 2. 删除账户表中的记录
+
+        // 2. 删除账户记录
         const accountResult = await trx.delete(accounts)
           .where(eq(accounts.id, account.id))
           .returning();
         
         const accountDeletedCount = accountResult.length;
-        console.log(`已删除账户记录: accountId=${account.id}, auth0Sub=${auth0Sub}, 数量=${accountDeletedCount}`);
-        
         return { 
           success: true, 
-          message: `成功解除设备关联并删除账户记录`,
+          message: `成功删除账户及其所有关联记录`,
           relationDeletedCount,
           accountDeletedCount,
           accountId: account.id,
@@ -235,6 +221,14 @@ export class AccountService {
       });
     } catch (error) {
       console.error('解除设备关联失败:', error);
+      // 打印更详细的错误信息
+      if (error instanceof Error) {
+        console.error('错误详情:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
       throw error;
     }
   }

@@ -4,7 +4,7 @@ import 'dotenv/config';
 import * as schema from './schema';
 
 // 获取数据库连接字符串
-const connectionString = process.env.DATABASE_URL || 'postgres://pguser:123456@localhost:5432/honostudy';
+const connectionString = process.env.VITE_DATABASE_URL;
 
 // 创建 PostgreSQL 连接池
 const pool = new Pool({
