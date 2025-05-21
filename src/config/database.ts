@@ -3,7 +3,7 @@ import { Pool } from 'pg';
 import * as schema from '../db/schema';
 
 // 获取数据库连接字符串
-const connectionString = process.env.VITE_DATABASE_URL || process.env.DATABASE_URL;
+const connectionString = 'postgresql://postgres:bXBcKw2wWybAXDtE@150.109.112.155:5432/manage_test';
 
 // 创建数据库连接池
 const pool = new Pool({
