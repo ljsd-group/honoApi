@@ -16,23 +16,23 @@ const APP_NAMES = {
 // 定义应用对应的API路径
 const APP_API_PATHS = {
   [APP_NAMES.ALGENIUS_NEXT]: {
-    dev: 'http://192.168.31.103:8080/adware/subscribe/find',
+    dev: 'http://192.168.31.100:8080/adware/subscribe/find',
     prod: 'https://ljsdstage.com/adware/subscribe/find'
   },
   [APP_NAMES.PICCHAT_BOX]: {
-    dev: 'http://192.168.31.103:8081/system/image/subscribe/find',
+    dev: 'http://192.168.31.100:8081/system/image/subscribe/find',
     prod: 'https://ljsdstage.com/api/system/image/subscribe/find'
   },
   [APP_NAMES.TRADE_TUTOR_VIDEO]: {
-    dev: 'http://192.168.31.103:8083/system/image/subscribe/find',
+    dev: 'http://192.168.31.100:8083/system/image/subscribe/find',
     prod: 'https://ljsdstage.com/video/system/image/subscribe/find'
   },
   [APP_NAMES.AI_META_AID]: {
-    dev: 'http://192.168.31.103:8084/system/image/subscribe/find',
+    dev: 'http://192.168.31.100:8084/system/image/subscribe/find',
     prod: 'https://ljsdstage.com/aiMetaMid/system/image/subscribe/find'
   },
   [APP_NAMES.WALLET_BACKSTAGE]: {
-    dev: 'http://192.168.31.103:8085/system/image/subscribe/find',
+    dev: 'http://192.168.31.100:8085/system/image/subscribe/find',
     prod: 'https://ljsdstage.com/wallet/system/image/subscribe/find'
   }
 };

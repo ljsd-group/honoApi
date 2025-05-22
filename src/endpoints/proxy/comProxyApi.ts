@@ -18,19 +18,19 @@ const APP_NAMES = {
 // 根据环境和应用名称定义基础URL
 const BASE_URLS = {
   [APP_NAMES.ALGENIUS_NEXT]: {
-    dev: 'http://localhost:8080',
+    dev: 'http://192.168.31.100:8080',
     prod: 'https://api.tradevidly.top'
   },
   [APP_NAMES.PICCHAT_BOX]: {
-    dev: 'http://localhost:8081',
+    dev: 'http://192.168.31.100:8081',
     prod: 'https://api.tradevidly.top/api'
   },
   [APP_NAMES.TRADE_TUTOR_VIDEO]: {
-    dev: 'http://localhost:8083',
+    dev: 'http://192.168.31.100:8083',
     prod: 'https://api.tradevidly.top/video'
   },
   [APP_NAMES.AI_META_AID]: {
-    dev: 'http://localhost:8084',
+    dev: 'http://192.168.31.100:8084',
     prod: 'https://api.tradevidly.top/aiMetaMid'
   },
   [APP_NAMES.WALLET_BACKSTAGE]: {
