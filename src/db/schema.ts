@@ -32,7 +32,6 @@ export const accounts = pgTable('accounts', {
   email_verified: boolean('email_verified').default(false),
   picture: varchar('picture', { length: 1000 }),
   app_id: integer('app_id').references(() => applications.id),
-  device_number: varchar('device_number', { length: 255 }),
   login_type: integer('login_type').default(1), // 登录类型：1=Apple, 2=Google
   phone_model: varchar('phone_model', { length: 100 }),
   country_code: varchar('country_code', { length: 50 }),

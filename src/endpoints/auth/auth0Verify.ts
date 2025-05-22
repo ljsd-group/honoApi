@@ -117,7 +117,6 @@ app.post('/', zValidator('json', auth0VerifySchema), async (c) => {
     const { access_token, loginType = LOGIN_TYPE.APPLE, appId } = c.req.valid('json');
     
     // 从请求头获取设备相关信息
-    const device_number = c.req.header("deviceNumber");
     const phone_model = c.req.header("phoneModel");
     const country_code = c.req.header("countryCode");
     const version = c.req.header("version");
@@ -190,7 +189,6 @@ app.post('/', zValidator('json', auth0VerifySchema), async (c) => {
       email_verified: userInfo.email_verified,
       picture: userInfo.picture,
       app_id: appIdNumber,
-      device_number: device_number,
       login_type: loginType,
       phone_model: phone_model,
       country_code: country_code,
@@ -199,14 +197,14 @@ app.post('/', zValidator('json', auth0VerifySchema), async (c) => {
     
     let account;
     
-    // 检查auth0_sub、deviceNumber和appId是否都存在
-    if (userInfo.sub && device_number && appIdNumber) {
-      // 先尝试查找匹配的账户（同时匹配auth0_sub、appId和deviceNumber）
-      account = await accountService.findAccountByAuth0SubAndAppIdAndDevice(userInfo.sub, appIdNumber, device_number);
+    // 检查auth0_sub和appId是否都存在
+    if (userInfo.sub && appIdNumber) {
+      // 查找匹配的账户（匹配auth0_sub和appId）
+      account = await accountService.findAccountByAuth0SubAndAppId(userInfo.sub, appIdNumber);
       
       if (account) {
         // 账户存在，更新账户信息
-        console.log('找到完全匹配的账户，更新账户信息');
+        console.log('找到匹配的账户，更新账户信息');
         if (account.id) {
           account = await accountService.updateAccount({
             id: account.id,
@@ -214,15 +212,15 @@ app.post('/', zValidator('json', auth0VerifySchema), async (c) => {
           });
         }
       } else {
-        // 不存在完全匹配的账户，直接创建新账户
-        console.log('不存在完全匹配的账户，创建新账户');
+        // 不存在匹配的账户，直接创建新账户
+        console.log('不存在匹配的账户，创建新账户');
         account = await accountService.createAccount(accountData);
       }
     } else {
-      // 缺少必要参数，无法进行精确匹配
+      // 缺少必要参数，无法进行匹配
       if (userInfo.sub) {
         // 创建新账户
-        console.log('缺少设备号或应用ID，创建新账户');
+        console.log('缺少应用ID，创建新账户');
         account = await accountService.createAccount(accountData);
       } else {
         // 没有auth0_sub，无法创建账户
@@ -237,7 +235,6 @@ app.post('/', zValidator('json', auth0VerifySchema), async (c) => {
       auth0_sub: userInfo.sub,
       name: userInfo.name || '',
       email: userInfo.email || '',
-      device_number: device_number || '',
       app_id: appIdNumber,
       exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60 * 30, // 30天后过期
     }, c.env.JWT_SECRET || 'fallback-secret-key');

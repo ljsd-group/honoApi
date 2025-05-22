@@ -13,7 +13,6 @@ export interface Account {
   email_verified?: boolean;
   picture?: string;
   app_id?: number;
-  device_number?: string;
   login_type?: number;
   phone_model?: string;
   country_code?: string;
@@ -58,26 +57,6 @@ export class AccountService {
     }
   }
   
-  // 根据Auth0 sub和deviceNumber查找账户
-  async findAccountByAuth0SubAndDevice(auth0Sub: string, deviceNumber: string) {
-    try {
-      const result = await this.db.select()
-        .from(accounts)
-        .where(
-          and(
-            eq(accounts.auth0_sub, auth0Sub),
-            eq(accounts.device_number, deviceNumber)
-          )
-        )
-        .limit(1);
-      
-      return result.length > 0 ? result[0] : null;
-    } catch (error) {
-      console.error('根据Auth0 sub和设备号查找账户失败:', error);
-      throw error;
-    }
-  }
-  
   // 根据Auth0 sub和appId查找账户
   async findAccountByAuth0SubAndAppId(auth0Sub: string, appId: number) {
     try {
@@ -94,27 +73,6 @@ export class AccountService {
       return result.length > 0 ? result[0] : null;
     } catch (error) {
       console.error('根据Auth0 sub和appId查找账户失败:', error);
-      throw error;
-    }
-  }
-  
-  // 根据Auth0 sub、appId和deviceNumber查找账户
-  async findAccountByAuth0SubAndAppIdAndDevice(auth0Sub: string, appId: number, deviceNumber: string) {
-    try {
-      const result = await this.db.select()
-        .from(accounts)
-        .where(
-          and(
-            eq(accounts.auth0_sub, auth0Sub),
-            eq(accounts.app_id, appId),
-            eq(accounts.device_number, deviceNumber)
-          )
-        )
-        .limit(1);
-      
-      return result.length > 0 ? result[0] : null;
-    } catch (error) {
-      console.error('根据Auth0 sub、appId和deviceNumber查找账户失败:', error);
       throw error;
     }
   }
@@ -147,7 +105,6 @@ export class AccountService {
           email_verified: accountData.email_verified,
           picture: accountData.picture,
           app_id: accountData.app_id,
-          device_number: accountData.device_number,
           login_type: accountData.login_type,
           phone_model: accountData.phone_model,
           country_code: accountData.country_code,
@@ -177,7 +134,6 @@ export class AccountService {
             email: accountData.email,
             email_verified: accountData.email_verified,
             picture: accountData.picture,
-            device_number: accountData.device_number,
             login_type: accountData.login_type,
             phone_model: accountData.phone_model,
             country_code: accountData.country_code,
@@ -215,6 +171,20 @@ export class AccountService {
       return { success: true, message: '账户删除成功', deletedCount: result.length };
     } catch (error) {
       console.error('删除账户失败:', error);
+      return { success: false, message: '删除账户失败: ' + error };
+    }
+  }
+  
+  // 根据ID删除账户
+  async deleteAccountById(id: number) {
+    try {
+      const result = await this.db.delete(accounts)
+        .where(eq(accounts.id, id))
+        .returning();
+      
+      return { success: true, message: '账户删除成功', deletedCount: result.length };
+    } catch (error) {
+      console.error('根据ID删除账户失败:', error);
       return { success: false, message: '删除账户失败: ' + error };
     }
   }
