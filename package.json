@@ -1,7 +1,7 @@
 {
   "name": "my-app",
   "scripts": {
-    "dev": "wrangler dev --local --ip 0.0.0.0 src/index.ts --env development",
+    "dev": "wrangler dev --local --ip 0.0.0.0 --port 8080 src/index.ts --env development",
     "deploy": "wrangler deploy --minify src/index.ts --env production",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "db:generate": "drizzle-kit generate",
