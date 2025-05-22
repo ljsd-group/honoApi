@@ -10,8 +10,8 @@ export interface UserRecord {
   password: string;
   email: string;
   role?: string;
-  created_at: Date;
-  updated_at: Date;
+  created_at: Date | string;
+  updated_at: Date | string;
 }
 
 export interface User {
@@ -82,9 +82,9 @@ export class UserService {
           password: userData.password || '',
           email: userData.email,
           role: userData.role || 'user',
-          created_at: new Date(),
-          updated_at: new Date()
-        })
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as any)
         .returning();
       
       return result[0].id;

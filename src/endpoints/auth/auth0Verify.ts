@@ -5,7 +5,7 @@ import { sign } from 'hono/jwt';
 import { Env, User } from '../../types';
 import { success, error, ResponseCode } from '../../utils/response';
 import { AccountService } from '../../services/accountService';
-import { DeviceService } from '../../services/deviceService';
+
 
 // Auth0用户信息类型定义
 interface Auth0UserInfo {
