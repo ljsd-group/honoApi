@@ -7,7 +7,9 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "fix-db": "ts-node src/scripts/fix-database.ts"
+    "fix-db": "ts-node src/scripts/fix-database.ts",
+    "fix-constraint": "tsx src/db/fix-constraint.ts",
+    "fix-timestamp": "tsx src/db/fix-timestamp.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.43.1",

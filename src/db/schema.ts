@@ -18,8 +18,8 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   role: varchar('role', { length: 20 }).default('user'),
   appId: integer('app_id').references(() => applications.id),
-  created_at: timestamp('created_at', { mode: 'string' }).defaultNow(),
-  updated_at: timestamp('updated_at', { mode: 'string' }).defaultNow()
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow()
 });
 
 // 定义Accounts表 - 基于Auth0用户信息
@@ -36,6 +36,6 @@ export const accounts = pgTable('accounts', {
   phone_model: varchar('phone_model', { length: 100 }),
   country_code: varchar('country_code', { length: 50 }),
   version: varchar('version', { length: 50 }),
-  created_at: timestamp('created_at', { mode: 'string' }).defaultNow(),
-  updated_at: timestamp('updated_at', { mode: 'string' }).defaultNow()
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow()
 }); 
