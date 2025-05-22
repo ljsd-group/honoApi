@@ -201,12 +201,12 @@ app.post('/', zValidator('json', auth0VerifySchema), async (c) => {
     
     // 检查auth0_sub、deviceNumber和appId是否都存在
     if (userInfo.sub && device_number && appIdNumber) {
-      // 先尝试查找匹配的账户
-      account = await accountService.findAccountByAuth0SubAndAppId(userInfo.sub, appIdNumber);
+      // 先尝试查找匹配的账户（同时匹配auth0_sub、appId和deviceNumber）
+      account = await accountService.findAccountByAuth0SubAndAppIdAndDevice(userInfo.sub, appIdNumber, device_number);
       
       if (account) {
         // 账户存在，更新账户信息
-        console.log('找到已存在的账户，更新账户信息');
+        console.log('找到完全匹配的账户，更新账户信息');
         if (account.id) {
           account = await accountService.updateAccount({
             id: account.id,
@@ -214,27 +214,20 @@ app.post('/', zValidator('json', auth0VerifySchema), async (c) => {
           });
         }
       } else {
-        // 账户不存在，创建新账户
-        console.log('未找到账户，创建新账户');
+        // 不存在完全匹配的账户，直接创建新账户
+        console.log('不存在完全匹配的账户，创建新账户');
         account = await accountService.createAccount(accountData);
       }
     } else {
-      // 缺少必要参数，尝试使用auth0_sub查找
-      account = await accountService.findAccountByAuth0Sub(userInfo.sub);
-      
-      if (account) {
-        // 账户存在，更新账户信息
-        console.log('找到已存在的Auth0账户，更新账户信息');
-        if (account.id) {
-          account = await accountService.updateAccount({
-            id: account.id,
-            ...accountData
-          });
-        }
-      } else {
-        // 账户不存在，创建新账户
-        console.log('未找到Auth0账户，创建新账户');
+      // 缺少必要参数，无法进行精确匹配
+      if (userInfo.sub) {
+        // 创建新账户
+        console.log('缺少设备号或应用ID，创建新账户');
         account = await accountService.createAccount(accountData);
+      } else {
+        // 没有auth0_sub，无法创建账户
+        console.log('没有auth0_sub，无法创建账户');
+        return error(c, "缺少必要的用户信息", ResponseCode.INTERNAL_ERROR, 400);
       }
     }
 

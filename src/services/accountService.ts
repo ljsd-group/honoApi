@@ -6,7 +6,6 @@ import { accounts, users } from '../db/schema';
 // 账户类型定义
 export interface Account {
   id?: number;
-  user_id?: number;
   auth0_sub: string;
   name?: string;
   nickname?: string;
@@ -14,14 +13,11 @@ export interface Account {
   email_verified?: boolean;
   picture?: string;
   app_id?: number;
-  // 新增设备相关字段
   device_number?: string;
   login_type?: number;
   phone_model?: string;
   country_code?: string;
   version?: string;
-  created_at?: Date;
-  updated_at?: Date;
 }
 
 // 账户服务类
@@ -102,14 +98,33 @@ export class AccountService {
     }
   }
   
+  // 根据Auth0 sub、appId和deviceNumber查找账户
+  async findAccountByAuth0SubAndAppIdAndDevice(auth0Sub: string, appId: number, deviceNumber: string) {
+    try {
+      const result = await this.db.select()
+        .from(accounts)
+        .where(
+          and(
+            eq(accounts.auth0_sub, auth0Sub),
+            eq(accounts.app_id, appId),
+            eq(accounts.device_number, deviceNumber)
+          )
+        )
+        .limit(1);
+      
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      console.error('根据Auth0 sub、appId和deviceNumber查找账户失败:', error);
+      throw error;
+    }
+  }
+  
   // 创建账户
   async createAccount(accountData: Account) {
     try {
       const result = await this.db.insert(accounts)
         .values({
-          ...accountData,
-          created_at: new Date(),
-          updated_at: new Date()
+          ...accountData
         })
         .returning();
         
@@ -136,8 +151,7 @@ export class AccountService {
           login_type: accountData.login_type,
           phone_model: accountData.phone_model,
           country_code: accountData.country_code,
-          version: accountData.version,
-          updated_at: new Date()
+          version: accountData.version
         })
         .where(eq(accounts.id, accountData.id));
       
@@ -167,8 +181,7 @@ export class AccountService {
             login_type: accountData.login_type,
             phone_model: accountData.phone_model,
             country_code: accountData.country_code,
-            version: accountData.version,
-            updated_at: new Date()
+            version: accountData.version
           })
           .where(eq(accounts.auth0_sub, accountData.auth0_sub));
         
@@ -183,20 +196,6 @@ export class AccountService {
       }
     } catch (error) {
       console.error('创建或更新账户失败:', error);
-      throw error;
-    }
-  }
-  
-  // 关联账户到用户
-  async linkAccountToUser(accountId: number, userId: number) {
-    try {
-      await this.db.update(accounts)
-        .set({ user_id: userId })
-        .where(eq(accounts.id, accountId));
-      
-      return true;
-    } catch (error) {
-      console.error('关联账户到用户失败:', error);
       throw error;
     }
   }

@@ -25,7 +25,7 @@ export const users = pgTable('users', {
 // 定义Accounts表 - 基于Auth0用户信息
 export const accounts = pgTable('accounts', {
   id: serial('id').primaryKey(),
-  auth0_sub: varchar('auth0_sub', { length: 255 }).notNull().unique(),
+  auth0_sub: varchar('auth0_sub', { length: 255 }).notNull(),
   name: varchar('name', { length: 100 }),
   nickname: varchar('nickname', { length: 100 }),
   email: varchar('email', { length: 255 }),

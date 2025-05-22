@@ -15,6 +15,13 @@
       "when": 1747884430774,
       "tag": "0001_silly_saracen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1747885527325,
+      "tag": "0002_dear_marten_broadcloak",
+      "breakpoints": true
     }
   ]
 }
