@@ -19,23 +19,23 @@ const APP_NAMES = {
 const BASE_URLS = {
   [APP_NAMES.ALGENIUS_NEXT]: {
     dev: 'http://192.168.31.100:8080',
-    prod: 'https://api.tradevidly.top'
+    prod: 'https://ljsdstage.com'
   },
   [APP_NAMES.PICCHAT_BOX]: {
     dev: 'http://192.168.31.100:8081',
-    prod: 'https://api.tradevidly.top/api'
+    prod: 'https://ljsdstage.com'
   },
   [APP_NAMES.TRADE_TUTOR_VIDEO]: {
     dev: 'http://192.168.31.100:8083',
-    prod: 'https://api.tradevidly.top/video'
+    prod: 'https://ljsdstage.com'
   },
   [APP_NAMES.AI_META_AID]: {
     dev: 'http://192.168.31.100:8084',
-    prod: 'https://api.tradevidly.top/aiMetaMid'
+    prod: 'https://ljsdstage.com'
   },
   [APP_NAMES.WALLET_BACKSTAGE]: {
     dev: 'http://localhost:8085',
-    prod: 'https://api.tradevidly.top/wallet'
+    prod: 'https://ljsdstage.com'
   }
 };
 
@@ -141,7 +141,7 @@ app.post('/', zValidator('json', comProxySchema), async (c) => {
 
     // 对于POST请求或没有查询参数的GET请求直接发送请求
     const response = await fetch(fullUrl, fetchOptions);
-
+    
     // 获取响应数据
     const responseData = await response.json() as Record<string, any>;
     

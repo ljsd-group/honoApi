@@ -13,6 +13,7 @@ const AUTH_WHITELIST: (string | RegExp)[] = [
   '/api/auth/auth0',
   '/api/auth/callback',
   '/api/auth/verify',
+  '/api/proxy/common',
   '/api/doc',
   '/.well-known/apple-app-site-association',
   /^\/api\/db-test\/.*/
