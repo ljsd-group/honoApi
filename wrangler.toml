@@ -1,0 +1,14 @@
+name = "my-app"
+main = "src/index.ts"
+compatibility_date = "2025-05-21"
+compatibility_flags = ["nodejs_compat"]
+
+[env.development.vars]
+ENVIRONMENT = "development"
+DATABASE_URL = "postgres://pguser:123456@localhost:5432/honostudy"
+JWT_SECRET = "3b97c48f7766afb388807f6c28f72342e0d9701c3ba73ef84efb8e50dd50b696c1b1e75894f4a3e0449b0c950669591788d04e5da38551f995b5c0ccf34864c9"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+DATABASE_URL = "postgresql://postgres:bXBcKw2wWybAXDtE@150.109.112.155:5432/manage_test"
+JWT_SECRET = "3b97c48f7766afb388807f6c28f72342e0d9701c3ba73ef84efb8e50dd50b696c1b1e75894f4a3e0449b0c950669591788d04e5da38551f995b5c0ccf34864c9"

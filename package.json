@@ -1,0 +1,29 @@
+{
+  "name": "my-app",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --env development",
+    "deploy": "wrangler deploy --minify src/index.ts --env production",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "fix-db": "ts-node src/scripts/fix-database.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.43.1",
+    "hono": "^4.7.10",
+    "@hono/zod-openapi": "^0.11.0",
+    "@hono/zod-validator": "^0.1.9",
+    "postgres": "^3.4.6",
+    "dotenv": "^16.3.1",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250521.0",
+    "@types/node": "^20.17.50",
+    "drizzle-kit": "^0.31.1",
+    "tsx": "^4.7.1",
+    "wrangler": "^4.16.0"
+  }
+}
