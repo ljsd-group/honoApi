@@ -1,4 +1,4 @@
-name = "boss-api-server"
+name = "auth0-api"
 main = "src/index.ts"
 compatibility_date = "2025-05-21"
 compatibility_flags = ["nodejs_compat"]
