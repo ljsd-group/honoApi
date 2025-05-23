@@ -1,5 +1,5 @@
 {
-  "name": "my-app",
+  "name": "bos-api-server",
   "scripts": {
     "dev": "wrangler dev --local --ip 0.0.0.0 --port 8080 src/index.ts --env development",
     "build": "wrangler build --env production",
