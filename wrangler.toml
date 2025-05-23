@@ -15,7 +15,7 @@ JWT_SECRET = "3b97c48f7766afb388807f6c28f72342e0d9701c3ba73ef84efb8e50dd50b696c1
 
 # wrangler.toml (wrangler v3.88.0^)
 [observability.logs]
-enabled = false
+enabled = true
 
 
 
