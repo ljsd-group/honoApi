@@ -1,4 +1,4 @@
-# bos-api-server
+# boss-api-server
 
 基于Cloudflare Workers和Hono框架构建的API服务。
 
