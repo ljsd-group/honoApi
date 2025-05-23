@@ -9,7 +9,8 @@
     "db:studio": "drizzle-kit studio",
     "fix-db": "ts-node src/scripts/fix-database.ts",
     "fix-constraint": "tsx src/db/fix-constraint.ts",
-    "fix-timestamp": "tsx src/db/fix-timestamp.ts"
+    "fix-timestamp": "tsx src/db/fix-timestamp.ts",
+    "db:seed:apps": "tsx src/db/seed-applications.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.43.1",
