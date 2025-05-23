@@ -6,7 +6,7 @@ export default {
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    url: 'postgresql://postgres:bXBcKw2wWybAXDtE@150.109.112.155:5432/manage_test',
+    url: 'postgresql://postgres:bXBcKw2wWybAXDtE@150.109.112.155:5432/manage_db',
   },
   // 只处理这3个表
   tablesFilter: [
