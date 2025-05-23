@@ -1,4 +1,4 @@
-# My App API
+# bos-api-server
 
 基于Cloudflare Workers和Hono框架构建的API服务。
 
@@ -14,7 +14,7 @@
 ## 项目结构
 
 ```
-my-app/
+bos-api-server/
 ├── src/
 │   ├── config/         # 配置文件
 │   ├── db/             # 数据库相关
